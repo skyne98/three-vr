@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-export interface BoxGeometryOptions {
+export interface CubeGeometryOptions {
     width?: number;
     height?: number;
     depth?: number;
@@ -11,8 +12,15 @@ export interface BoxGeometryOptions {
     topUV?: THREE.Vector2;
     bottomUV?: THREE.Vector2;
     uvScale?: number;
+
+    renderFront?: boolean;
+    renderBack?: boolean;
+    renderLeft?: boolean;
+    renderRight?: boolean;
+    renderTop?: boolean;
+    renderBottom?: boolean;
 }
-export function createBox(options: BoxGeometryOptions = {}): THREE.BufferGeometry {
+export function createCube(options: CubeGeometryOptions = {}): THREE.BufferGeometry {
     const width = options.width || 1;
     const height = options.height || 1;
     const depth = options.depth || 1;
@@ -24,123 +32,164 @@ export function createBox(options: BoxGeometryOptions = {}): THREE.BufferGeometr
     const bottomUV = options.bottomUV || frontUV;
     const uvScale = options.uvScale || 1;
 
-    // Create cube vertices 
-    const vertices = [
-        // Front face
-        -width / 2, -height / 2, depth / 2,  // 0
-        width / 2, -height / 2, depth / 2,  // 1
-        width / 2, height / 2, depth / 2,  // 2
-        -width / 2, height / 2, depth / 2,  // 3
-
-        // Back face
-        -width / 2, -height / 2, -depth / 2,  // 4
-        width / 2, -height / 2, -depth / 2,  // 5
-        width / 2, height / 2, -depth / 2,  // 6
-        -width / 2, height / 2, -depth / 2,  // 7
-
-        // Left face
-        -width / 2, -height / 2, -depth / 2,  // 8 
-        -width / 2, -height / 2, depth / 2,  // 9
-        -width / 2, height / 2, depth / 2,  // 10
-        -width / 2, height / 2, -depth / 2,  // 11
-
-        // Right face
-        width / 2, -height / 2, depth / 2,  // 12  
-        width / 2, -height / 2, -depth / 2,  // 13  
-        width / 2, height / 2, -depth / 2,  // 14  
-        width / 2, height / 2, depth / 2,  // 15
-
-        // Top face
-        -width / 2, height / 2, depth / 2,  // 16
-        width / 2, height / 2, depth / 2,  // 17
-        width / 2, height / 2, -depth / 2,  // 18
-        -width / 2, height / 2, -depth / 2,  // 19
-
-        // Bottom face
-        -width / 2, -height / 2, -depth / 2,  // 20
-        width / 2, -height / 2, -depth / 2,  // 21
-        width / 2, -height / 2, depth / 2,  // 22
-        -width / 2, -height / 2, depth / 2   // 23
-
-    ];
+    const renderFront = options.renderFront === undefined ? true : options.renderFront;
+    const renderBack = options.renderBack === undefined ? true : options.renderBack;
+    const renderLeft = options.renderLeft === undefined ? true : options.renderLeft;
+    const renderRight = options.renderRight === undefined ? true : options.renderRight;
+    const renderTop = options.renderTop === undefined ? true : options.renderTop;
+    const renderBottom = options.renderBottom === undefined ? true : options.renderBottom;
 
     // Create cube face indices
-    const indices = [
-        0, 1, 2, 0, 2, 3,    // front
-        4, 6, 5, 4, 7, 6,    // back
-        8, 9, 10, 8, 10, 11,   // left
-        12, 13, 14, 12, 14, 15,   // right
-        16, 17, 18, 16, 18, 19,   // top
-        20, 21, 22, 20, 22, 23    // bottom
-    ];
-
-    // Create cube UV coordinates
-    const uvs = [
-        // Front face
-        frontUV.x, frontUV.y,
-        frontUV.x + uvScale, frontUV.y,
-        frontUV.x + uvScale, frontUV.y + uvScale,
-        frontUV.x, frontUV.y + uvScale,
-        // Back face
-        frontUV.x + uvScale, frontUV.y,
-        frontUV.x, frontUV.y,
-        frontUV.x, frontUV.y + uvScale,
-        frontUV.x + uvScale, frontUV.y + uvScale,
-        // Left face
-        leftUV.x, leftUV.y,
-        leftUV.x + uvScale, leftUV.y,
-        leftUV.x + uvScale, leftUV.y + uvScale,
-        leftUV.x, leftUV.y + uvScale,
-        // Right face
-        rightUV.x, rightUV.y,
-        rightUV.x + uvScale, rightUV.y,
-        rightUV.x + uvScale, rightUV.y + uvScale,
-        rightUV.x, rightUV.y + uvScale,
-        // Top face
-        topUV.x, topUV.y,
-        topUV.x + uvScale, topUV.y,
-        topUV.x + uvScale, topUV.y + uvScale,
-        topUV.x, topUV.y + uvScale,
-        // Bottom face
-        bottomUV.x, bottomUV.y,
-        bottomUV.x + uvScale, bottomUV.y,
-        bottomUV.x + uvScale, bottomUV.y + uvScale,
-        bottomUV.x, bottomUV.y + uvScale
-    ];
-
-    // Create cube normals
-    const normals = [
-        // Front
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        // Back
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        // Left
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        // Right
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        // Top
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        // Bottom
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0
-    ];
+    const vertices: number[] = [];
+    const indices: number[] = [];
+    const uvs: number[] = [];
+    const normals: number[] = [];
+    let indexOffset = 0;
+    if (renderFront) {
+        vertices.push(
+            // Front face
+            -width / 2, -height / 2, depth / 2,  // 0
+            width / 2, -height / 2, depth / 2,  // 1
+            width / 2, height / 2, depth / 2,  // 2
+            -width / 2, height / 2, depth / 2,  // 3
+        );
+        indices.push(0, 1, 2, 0, 2, 3);
+        indexOffset += 4;
+        uvs.push(
+            frontUV.x, frontUV.y,
+            frontUV.x + uvScale, frontUV.y,
+            frontUV.x + uvScale, frontUV.y + uvScale,
+            frontUV.x, frontUV.y + uvScale,
+        );
+        normals.push(
+            // Front
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1
+        );
+    }
+    if (renderBack) {
+        vertices.push(
+            // Back face
+            -width / 2, -height / 2, -depth / 2,  // 4
+            width / 2, -height / 2, -depth / 2,  // 5
+            width / 2, height / 2, -depth / 2,  // 6
+            -width / 2, height / 2, -depth / 2,  // 7
+        );
+        indices.push(0 + indexOffset, 2 + indexOffset, 1 + indexOffset, 0 + indexOffset, 3 + indexOffset, 2 + indexOffset);
+        indexOffset += 4;
+        uvs.push(
+            backUV.x + uvScale, backUV.y,
+            backUV.x, backUV.y,
+            backUV.x, backUV.y + uvScale,
+            backUV.x + uvScale, backUV.y + uvScale,
+        );
+        normals.push(
+            // Back
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1,
+            0, 0, -1
+        );
+    }
+    if (renderLeft) {
+        vertices.push(
+            // Left face
+            -width / 2, -height / 2, -depth / 2,  // 8
+            -width / 2, -height / 2, depth / 2,  // 9
+            -width / 2, height / 2, depth / 2,  // 10
+            -width / 2, height / 2, -depth / 2,  // 11
+        );
+        indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
+        indexOffset += 4;
+        uvs.push(
+            leftUV.x, leftUV.y,
+            leftUV.x + uvScale, leftUV.y,
+            leftUV.x + uvScale, leftUV.y + uvScale,
+            leftUV.x, leftUV.y + uvScale,
+        );
+        normals.push(
+            // Left
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0,
+            -1, 0, 0
+        );
+    }
+    if (renderRight) {
+        vertices.push(
+            // Right face
+            width / 2, -height / 2, depth / 2,  // 12
+            width / 2, -height / 2, -depth / 2,  // 13
+            width / 2, height / 2, -depth / 2,  // 14
+            width / 2, height / 2, depth / 2,  // 15
+        );
+        indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
+        indexOffset += 4;
+        uvs.push(
+            // Right face
+            rightUV.x, rightUV.y,
+            rightUV.x + uvScale, rightUV.y,
+            rightUV.x + uvScale, rightUV.y + uvScale,
+            rightUV.x, rightUV.y + uvScale,
+        );
+        normals.push(
+            // Right
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0,
+            1, 0, 0
+        );
+    }
+    if (renderTop) {
+        vertices.push(
+            // Top face
+            -width / 2, height / 2, depth / 2,  // 16
+            width / 2, height / 2, depth / 2,  // 17
+            width / 2, height / 2, -depth / 2,  // 18
+            -width / 2, height / 2, -depth / 2,  // 19
+        );
+        indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
+        indexOffset += 4;
+        uvs.push(
+            topUV.x, topUV.y,
+            topUV.x + uvScale, topUV.y,
+            topUV.x + uvScale, topUV.y + uvScale,
+            topUV.x, topUV.y + uvScale,
+        );
+        normals.push(
+            // Top
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0,
+            0, 1, 0
+        );
+    }
+    if (renderBottom) {
+        vertices.push(
+            // Bottom face
+            -width / 2, -height / 2, -depth / 2,  // 20
+            width / 2, -height / 2, -depth / 2,  // 21
+            width / 2, -height / 2, depth / 2,  // 22
+            -width / 2, -height / 2, depth / 2   // 23
+        );
+        indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
+        indexOffset += 4;
+        uvs.push(
+            bottomUV.x, bottomUV.y,
+            bottomUV.x + uvScale, bottomUV.y,
+            bottomUV.x + uvScale, bottomUV.y + uvScale,
+            bottomUV.x, bottomUV.y + uvScale,
+        );
+        normals.push(
+            // Bottom
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0,
+            0, -1, 0
+        );
+    }
 
     // Create cube geometry
     const geometry = new THREE.BufferGeometry();
@@ -150,4 +199,29 @@ export function createBox(options: BoxGeometryOptions = {}): THREE.BufferGeometr
     geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
 
     return geometry;
+}
+export function createChunk(width: number, height: number, depth: number, options: CubeGeometryOptions = {}): THREE.BufferGeometry {
+    let geometries: THREE.BufferGeometry[] = [];
+
+    for (let x = 0; x < width; x += 1) {
+        for (let y = 0; y < height; y += 1) {
+            for (let z = 0; z < depth; z += 1) {
+                const localOpts = JSON.parse(JSON.stringify(options));
+                localOpts.renderBack = z === 0;
+                localOpts.renderFront = z === depth - 1;
+                localOpts.renderLeft = x === 0;
+                localOpts.renderRight = x === width - 1;
+                localOpts.renderTop = y === height - 1;
+                localOpts.renderBottom = y === 0;
+                const geometry = createCube(localOpts);
+                geometry.translate(x, y, z);
+                geometries.push(geometry);
+            }
+        }
+    }
+
+    const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
+    const withMergedVertices = BufferGeometryUtils.mergeVertices(mergedGeometry);
+
+    return withMergedVertices;
 }

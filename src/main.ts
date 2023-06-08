@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
-import { createBox } from './mesh';
+import { createChunk, createCube } from './mesh';
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,10 +26,10 @@ pointerLockControls.addEventListener('unlock', () => {
     console.log('PointerLockControls unlocked');
 });
 
-const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+const pointLight = new THREE.PointLight(0xffffff, 1, 10);
 pointLight.position.set(0, 0, 0);
 scene.add(pointLight);
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
 scene.add(ambientLight);
 
 const colorMapUrl = new URL('../materials/sand/Ground054_2K_Color.jpg', import.meta.url);
@@ -80,12 +80,20 @@ const prototypeMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map: prototypeColorTexture,
 });
-const customGeometry = createBox({});
+const customGeometry = createCube({});
 const customMesh = new THREE.Mesh(customGeometry, prototypeMaterial);
 customMesh.position.set(0, 0, -2);
 customMesh.castShadow = true;
 customMesh.receiveShadow = true;
 scene.add(customMesh);
+
+// Create a chunk of cubes
+const chunkGeometry = createChunk(3, 3, 3, {});
+const chunkMesh = new THREE.Mesh(chunkGeometry, prototypeMaterial);
+chunkMesh.position.set(0, 0, 2);
+chunkMesh.castShadow = true;
+chunkMesh.receiveShadow = true;
+scene.add(chunkMesh);
 
 let lastTime = performance.now();
 function animate() {
