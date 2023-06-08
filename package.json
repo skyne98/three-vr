@@ -1,0 +1,14 @@
+{
+  "name": "three-vr",
+  "version": "0.0.0",
+  "main": "src/dist.js",
+  "license": "All Rights Reserved",
+  "private": true,
+  "devDependencies": {
+    "@types/three": "^0.152.1",
+    "parcel": "^2.9.1"
+  },
+  "dependencies": {
+    "three": "^0.153.0"
+  }
+}
