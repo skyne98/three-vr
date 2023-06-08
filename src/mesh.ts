@@ -1,7 +1,29 @@
 import * as THREE from 'three';
 
-// Returns a 3d box buffer geometry with the given width and height.
-export function createBox(width: number, height: number, depth: number): THREE.BufferGeometry {
+export interface BoxGeometryOptions {
+    width?: number;
+    height?: number;
+    depth?: number;
+    frontUV?: THREE.Vector2;
+    backUV?: THREE.Vector2;
+    leftUV?: THREE.Vector2;
+    rightUV?: THREE.Vector2;
+    topUV?: THREE.Vector2;
+    bottomUV?: THREE.Vector2;
+    uvScale?: number;
+}
+export function createBox(options: BoxGeometryOptions = {}): THREE.BufferGeometry {
+    const width = options.width || 1;
+    const height = options.height || 1;
+    const depth = options.depth || 1;
+    const frontUV = options.frontUV || new THREE.Vector2(0, 0);
+    const backUV = options.backUV || frontUV;
+    const leftUV = options.leftUV || frontUV;
+    const rightUV = options.rightUV || frontUV;
+    const topUV = options.topUV || frontUV;
+    const bottomUV = options.bottomUV || frontUV;
+    const uvScale = options.uvScale || 1;
+
     // Create cube vertices 
     const vertices = [
         // Front face
@@ -55,35 +77,35 @@ export function createBox(width: number, height: number, depth: number): THREE.B
     // Create cube UV coordinates
     const uvs = [
         // Front face
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
+        frontUV.x, frontUV.y,
+        frontUV.x + uvScale, frontUV.y,
+        frontUV.x + uvScale, frontUV.y + uvScale,
+        frontUV.x, frontUV.y + uvScale,
         // Back face
-        1, 0,
-        0, 0,
-        0, 1,
-        1, 1,
+        frontUV.x + uvScale, frontUV.y,
+        frontUV.x, frontUV.y,
+        frontUV.x, frontUV.y + uvScale,
+        frontUV.x + uvScale, frontUV.y + uvScale,
         // Left face
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
+        leftUV.x, leftUV.y,
+        leftUV.x + uvScale, leftUV.y,
+        leftUV.x + uvScale, leftUV.y + uvScale,
+        leftUV.x, leftUV.y + uvScale,
         // Right face
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
+        rightUV.x, rightUV.y,
+        rightUV.x + uvScale, rightUV.y,
+        rightUV.x + uvScale, rightUV.y + uvScale,
+        rightUV.x, rightUV.y + uvScale,
         // Top face
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1,
+        topUV.x, topUV.y,
+        topUV.x + uvScale, topUV.y,
+        topUV.x + uvScale, topUV.y + uvScale,
+        topUV.x, topUV.y + uvScale,
         // Bottom face
-        0, 0,
-        1, 0,
-        1, 1,
-        0, 1
+        bottomUV.x, bottomUV.y,
+        bottomUV.x + uvScale, bottomUV.y,
+        bottomUV.x + uvScale, bottomUV.y + uvScale,
+        bottomUV.x, bottomUV.y + uvScale
     ];
 
     // Create cube normals

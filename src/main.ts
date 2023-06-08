@@ -80,7 +80,7 @@ const prototypeMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map: prototypeColorTexture,
 });
-const customGeometry = createBox(1, 1, 1);
+const customGeometry = createBox({});
 const customMesh = new THREE.Mesh(customGeometry, prototypeMaterial);
 customMesh.position.set(0, 0, -2);
 customMesh.castShadow = true;
