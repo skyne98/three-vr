@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
 
 const renderer = new THREE.WebGLRenderer();
@@ -54,6 +55,10 @@ controls.keyboardAxis2('move', 'KeyW', 'KeyS', 'KeyA', 'KeyD');
 controls.keyboardAxis('upDown', 'ShiftLeft', 'Space');
 controls.keyboardKey('unlock', 'Escape');
 
+// Stats
+const stats = new Stats();
+document.body.appendChild(stats.dom);
+
 const material = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map: colorTexture,
@@ -75,6 +80,7 @@ function animate() {
     const time = performance.now();
     const delta = (time - lastTime) / 1000;
     lastTime = time;
+    stats.update();
 
     // Controls
     if (controls.get('unlock').isJustPressed) {
