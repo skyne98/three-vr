@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
+import { createBox } from './mesh';
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -28,10 +29,9 @@ pointerLockControls.addEventListener('unlock', () => {
 const pointLight = new THREE.PointLight(0xffffff, 1, 100);
 pointLight.position.set(0, 0, 0);
 scene.add(pointLight);
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
 scene.add(ambientLight);
 
-const geometry = new THREE.BoxGeometry();
 const colorMapUrl = new URL('../materials/sand/Ground054_2K_Color.jpg', import.meta.url);
 const colorTexture = new THREE.TextureLoader().load(colorMapUrl.href);
 const normalMapUrl = new URL('../materials/sand/Ground054_2K_NormalGL.jpg', import.meta.url);
@@ -42,10 +42,6 @@ const aoMapUrl = new URL('../materials/sand/Ground054_2K_AmbientOcclusion.jpg', 
 const aoTexture = new THREE.TextureLoader().load(aoMapUrl.href);
 const bumpMapUrl = new URL('../materials/sand/Ground054_2K_Displacement.jpg', import.meta.url);
 const bumpTexture = new THREE.TextureLoader().load(bumpMapUrl.href);
-
-// colorTexture.repeat = normalTexture.repeat = roughnessTexture.repeat = aoTexture.repeat = bumpTexture.repeat = new THREE.Vector2(2, 2);
-// colorTexture.wrapS = normalTexture.wrapS = roughnessTexture.wrapS = aoTexture.wrapS = bumpTexture.wrapS = THREE.RepeatWrapping;
-// colorTexture.wrapT = normalTexture.wrapT = roughnessTexture.wrapT = aoTexture.wrapT = bumpTexture.wrapT = THREE.RepeatWrapping;
 
 window.addEventListener('click', () => {
     pointerLockControls.lock();
@@ -62,17 +58,34 @@ document.body.appendChild(stats.dom);
 const material = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     map: colorTexture,
-    normalMap: normalTexture,
+    // normalMap: normalTexture,
     roughnessMap: roughnessTexture,
+    metalnessMap: roughnessTexture,
     aoMap: aoTexture,
     bumpMap: bumpTexture,
+    bumpScale: 0.05,
 });
+const geometry = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
 const cube = new THREE.Mesh(geometry, material);
 cube.castShadow = true;
 cube.receiveShadow = true;
 scene.add(cube);
 
 camera.position.z = 5;
+
+// Custom mesh (vers, indices, uvs)
+const prototypeColorMapUrl = new URL('../materials/prototype/Orange/texture_01.png', import.meta.url);
+const prototypeColorTexture = new THREE.TextureLoader().load(prototypeColorMapUrl.href);
+const prototypeMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    map: prototypeColorTexture,
+});
+const customGeometry = createBox(1, 1, 1);
+const customMesh = new THREE.Mesh(customGeometry, prototypeMaterial);
+customMesh.position.set(0, 0, -2);
+customMesh.castShadow = true;
+customMesh.receiveShadow = true;
+scene.add(customMesh);
 
 let lastTime = performance.now();
 function animate() {
