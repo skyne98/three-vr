@@ -3,6 +3,7 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
 import { createChunk, createCube } from './mesh';
+import { Noise } from './noise';
 
 const white = new THREE.Color(0xffffff);
 const renderer = new THREE.WebGLRenderer();
@@ -90,8 +91,18 @@ customMesh.castShadow = true;
 customMesh.receiveShadow = true;
 scene.add(customMesh);
 
+// Noise
+const noise = new Noise('seed');
 // Create a chunk of cubes
-const chunkGeometry = createChunk(3, 3, 3, {});
+const buffer: boolean[] = [];
+for (let i = 0; i < 16 * 16 * 16; i++) {
+    let x = i % 16;
+    let y = Math.floor(i / 16) % 16;
+    let z = Math.floor(i / 16 / 16);
+    buffer.push(noise.noise(x / 100, z / 100) > y / 16);
+}
+console.log(buffer.filter((x) => x).length);
+const chunkGeometry = createChunk(16, 16, 16, buffer, {});
 const chunkMesh = new THREE.Mesh(chunkGeometry, prototypeMaterial);
 chunkMesh.position.set(0, 0, 2);
 chunkMesh.castShadow = true;

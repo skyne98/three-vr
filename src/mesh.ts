@@ -200,19 +200,26 @@ export function createCube(options: CubeGeometryOptions = {}): THREE.BufferGeome
 
     return geometry;
 }
-export function createChunk(width: number, height: number, depth: number, options: CubeGeometryOptions = {}): THREE.BufferGeometry {
+export function createChunk(width: number, height: number, depth: number, buffer: boolean[], options: CubeGeometryOptions = {}): THREE.BufferGeometry {
     let geometries: THREE.BufferGeometry[] = [];
+    function getAt(x: number, y: number, z: number): boolean {
+        if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= depth) {
+            return false;
+        }
+        return buffer[x + y * width + z * width * height];
+    }
 
     for (let x = 0; x < width; x += 1) {
         for (let y = 0; y < height; y += 1) {
             for (let z = 0; z < depth; z += 1) {
                 const localOpts = JSON.parse(JSON.stringify(options));
-                localOpts.renderBack = z === 0;
-                localOpts.renderFront = z === depth - 1;
-                localOpts.renderLeft = x === 0;
-                localOpts.renderRight = x === width - 1;
-                localOpts.renderTop = y === height - 1;
-                localOpts.renderBottom = y === 0;
+                const current = getAt(x, y, z);
+                localOpts.renderFront = current && getAt(x, y, z + 1) === false;
+                localOpts.renderBack = current && getAt(x, y, z - 1) === false;
+                localOpts.renderLeft = current && getAt(x - 1, y, z) === false;
+                localOpts.renderRight = current && getAt(x + 1, y, z) === false;
+                localOpts.renderTop = current && getAt(x, y + 1, z) === false;
+                localOpts.renderBottom = current && getAt(x, y - 1, z) === false;
                 const geometry = createCube(localOpts);
                 geometry.translate(x, y, z);
                 geometries.push(geometry);
