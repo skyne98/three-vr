@@ -4,6 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
 import { createChunk, createCube } from './mesh';
 
+const white = new THREE.Color(0xffffff);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
@@ -26,22 +27,24 @@ pointerLockControls.addEventListener('unlock', () => {
     console.log('PointerLockControls unlocked');
 });
 
-const pointLight = new THREE.PointLight(0xffffff, 1, 10);
+const pointLight = new THREE.PointLight(white, 1, 10);
 pointLight.position.set(0, 0, 0);
 scene.add(pointLight);
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+const ambientLight = new THREE.AmbientLight(white, 0.3);
 scene.add(ambientLight);
 
+const textureLoader = new THREE.TextureLoader();
 const colorMapUrl = new URL('../materials/sand/Ground054_2K_Color.jpg', import.meta.url);
-const colorTexture = new THREE.TextureLoader().load(colorMapUrl.href);
+const colorTexture = textureLoader.load(colorMapUrl.href);
+colorTexture.colorSpace = THREE.SRGBColorSpace;
 const normalMapUrl = new URL('../materials/sand/Ground054_2K_NormalGL.jpg', import.meta.url);
-const normalTexture = new THREE.TextureLoader().load(normalMapUrl.href);
+const normalTexture = textureLoader.load(normalMapUrl.href);
 const roughnessMapUrl = new URL('../materials/sand/Ground054_2K_Roughness.jpg', import.meta.url);
-const roughnessTexture = new THREE.TextureLoader().load(roughnessMapUrl.href);
+const roughnessTexture = textureLoader.load(roughnessMapUrl.href);
 const aoMapUrl = new URL('../materials/sand/Ground054_2K_AmbientOcclusion.jpg', import.meta.url);
-const aoTexture = new THREE.TextureLoader().load(aoMapUrl.href);
+const aoTexture = textureLoader.load(aoMapUrl.href);
 const bumpMapUrl = new URL('../materials/sand/Ground054_2K_Displacement.jpg', import.meta.url);
-const bumpTexture = new THREE.TextureLoader().load(bumpMapUrl.href);
+const bumpTexture = textureLoader.load(bumpMapUrl.href);
 
 window.addEventListener('click', () => {
     pointerLockControls.lock();
@@ -56,9 +59,8 @@ const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 const material = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
+    color: white,
     map: colorTexture,
-    // normalMap: normalTexture,
     roughnessMap: roughnessTexture,
     metalnessMap: roughnessTexture,
     aoMap: aoTexture,
@@ -76,8 +78,9 @@ camera.position.z = 5;
 // Custom mesh (vers, indices, uvs)
 const prototypeColorMapUrl = new URL('../materials/prototype/Orange/texture_01.png', import.meta.url);
 const prototypeColorTexture = new THREE.TextureLoader().load(prototypeColorMapUrl.href);
+prototypeColorTexture.colorSpace = THREE.SRGBColorSpace;
 const prototypeMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,
+    color: white,
     map: prototypeColorTexture,
 });
 const customGeometry = createCube({});
