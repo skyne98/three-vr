@@ -206,7 +206,7 @@ export function createChunk(width: number, height: number, depth: number, buffer
         if (x < 0 || x >= width || y < 0 || y >= height || z < 0 || z >= depth) {
             return false;
         }
-        return buffer[x + y * width + z * width * height];
+        return buffer[z + y * depth + x * depth * height];
     }
 
     for (let x = 0; x < width; x += 1) {
