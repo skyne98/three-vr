@@ -132,6 +132,7 @@ let leaveLight = false;
 
 // Chunks storage
 const chunks: Map<string, THREE.Mesh> = new Map();
+const chunkOffsets: Map<THREE.Mesh, number> = new Map();
 function getChunkKey(x: number, y: number, z: number): string {
     return `${x},${y},${z}`;
 }
@@ -173,7 +174,6 @@ function updateChunks(): void {
             for (let chunkZ = playerChunkZ - chunkRadius; chunkZ <= playerChunkZ + chunkRadius; chunkZ++) {
                 if (getChunk(chunkX, chunkY, chunkZ)) continue;
                 const buffer: boolean[] = [];
-                console.log('Generating chunk', chunkX, chunkY, chunkZ);
                 for (let blockX = 0; blockX < chunkSize; blockX++) {
                     for (let blockY = 0; blockY < chunkSize; blockY++) {
                         for (let blockZ = 0; blockZ < chunkSize; blockZ++) {
@@ -195,6 +195,7 @@ function updateChunks(): void {
                 chunkMesh.receiveShadow = true;
                 setChunk(chunkX, chunkY, chunkZ, chunkMesh);
                 scene.add(chunkMesh);
+                chunkOffsets.set(chunkMesh, 5);
             }
         }
     }
@@ -232,6 +233,19 @@ function animate() {
 
     // Update chunks
     updateChunks();
+
+    // Set chunk offsets
+    let chunkSize = 16;
+    for (let chunk of chunks.values()) {
+        const chunkPosition = chunk.position;
+        const chunkY = Math.ceil(chunkPosition.y / chunkSize);
+        let offset = chunkOffsets.get(chunk)!;
+        if (offset === 0) continue;
+        let newOffset = offset - delta * 10;
+        if (newOffset < 0) newOffset = 0;
+        chunkOffsets.set(chunk, newOffset);
+        chunk.position.setY(chunkY * chunkSize - newOffset);
+    }
 
     renderer.render(scene, camera);
 }
