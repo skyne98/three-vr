@@ -4,12 +4,24 @@
   "main": "src/dist.js",
   "license": "All Rights Reserved",
   "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "start:vite": "vite --host",
+    "build:vite": "vite build"
+  },
   "devDependencies": {
+    "@parcel/transformer-glsl": "^2.9.1",
     "@types/three": "^0.152.1",
-    "parcel": "^2.9.1"
+    "parcel": "^2.9.1",
+    "vite": "^4.3.9",
+    "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
+    "@dimforge/rapier3d": "*",
     "simplex-noise": "^4.0.1",
-    "three": "^0.153.0"
+    "three": "^0.153.0",
+    "uuid": "^9.0.0"
   }
 }
