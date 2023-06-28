@@ -89,7 +89,7 @@ export class MeshWorker {
         });
         this.promiseMap.set(request.id, { resolve: promiseResolve!, reject: promiseReject!, promise });
         request.type = 'chunk';
-        this.worker.postMessage(request);
+        this.worker.postMessage(request, [request.buffer.buffer]);
         return promise;
     }
 }

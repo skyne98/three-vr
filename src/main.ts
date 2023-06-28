@@ -4,7 +4,9 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { Controls } from './controls';
 import { World } from './world';
 
-// Test out a Web Worker
+// Test out rapier3d physics engine
+import { Capsule } from '@dimforge/rapier3d';
+console.log(Capsule);
 
 const white = new THREE.Color(0xffffff);
 const renderer = new THREE.WebGLRenderer({

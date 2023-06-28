@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import * as THREE from 'three';
 import { CubeGeometryOptions, GenerateChunkRequest, GenerateMeshResponse } from './mesh_client';
 
@@ -228,6 +230,6 @@ self.addEventListener('message', (event) => {
         self.postMessage({
             id: chunkRequest.id,
             data: chunk
-        });
+        }, [chunk.position.buffer, chunk.uv.buffer, chunk.normal.buffer, chunk.index.buffer]);
     }
 });
