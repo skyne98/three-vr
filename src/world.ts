@@ -6,7 +6,7 @@ import { meshWorker } from "./workers/mesh_client";
 import { blockMaterial } from "./material/block";
 
 export const CHUNK_SIZE = 32;
-export const CHUNK_RADIUS = 2;
+export const CHUNK_RADIUS = 5;
 
 export class Chunk {
     world: World;
@@ -162,7 +162,6 @@ export class World {
         }
 
         const toRemesh = new Set<{ buffer: boolean[] | undefined, chunk: Chunk }>();
-        outerloop:
         for (let chunkX = playerChunkX - CHUNK_RADIUS; chunkX <= playerChunkX + CHUNK_RADIUS; chunkX++) {
             for (let chunkY = playerChunkY - CHUNK_RADIUS; chunkY <= playerChunkY + CHUNK_RADIUS; chunkY++) {
                 for (let chunkZ = playerChunkZ - CHUNK_RADIUS; chunkZ <= playerChunkZ + CHUNK_RADIUS; chunkZ++) {
@@ -208,8 +207,6 @@ export class World {
                                 }
                             }
                         }
-
-                        break outerloop;
                     }
                 }
             }
@@ -239,7 +236,8 @@ export class World {
             const bDot = bChunkWorldPosition.clone().sub(cameraPosition).normalize().dot(cameraDirection);
             const byDot = bDot - aDot;
 
-            return (byDistance * -1) * byDot;
+            // return (byDistance * -1) * byDot;
+            return byDistance;
         });
 
         // Remesh chunks
