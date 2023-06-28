@@ -26,7 +26,7 @@ export function createChunk(
     for (let x = 0; x < width; x += 1) {
         for (let y = 0; y < height; y += 1) {
             for (let z = 0; z < depth; z += 1) {
-                const localOpts = JSON.parse(JSON.stringify(options));
+                const localOpts = { ...options };
                 const current = getAt(x, y, z);
                 localOpts.renderFront = current && getAt(x, y, z + 1) === false;
                 localOpts.renderBack = current && getAt(x, y, z - 1) === false;
