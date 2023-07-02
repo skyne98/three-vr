@@ -8,5 +8,9 @@ import topLevelAwait from "vite-plugin-top-level-await";
 export default defineConfig({
     root: "src",
     build: { sourcemap: true },
-    plugins: [glsl(), wasm(), topLevelAwait()],
+    plugins: [
+        glsl(),
+        wasm(),
+        topLevelAwait()
+    ],
 });

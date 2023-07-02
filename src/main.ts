@@ -94,6 +94,11 @@ let leaveLight = false;
 // Chunks
 const world = new World(pointerLockControls, scene);
 
+// Wireframe
+let wireframe = false;
+// Add a wireframe control
+controls.keyboardKey('toggleWireframe', 'KeyF');
+
 function animate() {
     const time = performance.now();
     const delta = (time - lastTime) / 1000;
@@ -114,6 +119,11 @@ function animate() {
     const cameraObject = pointerLockControls.getObject();
     const cameraLocalMovement = movement.clone().applyQuaternion(cameraObject.quaternion);
     cameraObject.position.add(cameraLocalMovement);
+    // Toggle wireframe by pressing 'F'
+    if (controls.get('toggleWireframe').isJustReleased) {
+        wireframe = !wireframe;
+        material.wireframe = wireframe;
+    }
 
     // Set point light position to camera position
     if (controls.get('leaveLight').isJustPressed) {

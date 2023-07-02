@@ -232,12 +232,13 @@ export class World {
 
             // Now by the dot product to the camera direction
             const cameraDirection = cameraObject.getWorldDirection(new THREE.Vector3());
-            const aDot = aChunkWorldPosition.clone().sub(cameraPosition).normalize().dot(cameraDirection);
-            const bDot = bChunkWorldPosition.clone().sub(cameraPosition).normalize().dot(cameraDirection);
-            const byDot = bDot - aDot;
+            let aDot = aChunkWorldPosition.clone().sub(cameraPosition).dot(cameraDirection);
+            let bDot = bChunkWorldPosition.clone().sub(cameraPosition).dot(cameraDirection);
+            if (aDot < 0) aDot = aDot * -1000;
+            if (bDot < 0) bDot = bDot * -1000;
+            const byDot = aDot - bDot;
 
-            // return (byDistance * -1) * byDot;
-            return byDistance;
+            return byDistance * 0.2 + byDot;
         });
 
         // Remesh chunks
