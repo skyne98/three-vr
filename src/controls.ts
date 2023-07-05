@@ -7,6 +7,7 @@ Axis movement will range from -1 to 1.
 export class ControlState {
     private _value: THREE.Vector2 = new THREE.Vector2();
     private _lastValue: THREE.Vector2 = new THREE.Vector2();
+    private _dirty: boolean = false;
 
     constructor() {
         /* ... */
@@ -34,26 +35,39 @@ export class ControlState {
     public update(value: THREE.Vector2): void {
         this._lastValue.copy(this._value);
         this._value.copy(value);
+
+        if (this.isJustPressed || this.isJustReleased) {
+            this._dirty = true;
+        }
+    }
+    public processDirty(): void {
+        this._dirty = false;
+        if (this.isJustPressed) {
+            this._lastValue.copy(this._value);
+        }
+        if (this.isJustReleased) {
+            this._lastValue.set(0, 0);
+        }
     }
 
     // Helper functions
     public get isPressed(): boolean {
-        return this._value.length() > 0;
+        return this._value.x === 1;
     }
     public get isReleased(): boolean {
         return this._value.length() === 0;
     }
     public get isJustPressed(): boolean {
-        return this._value.length() > 0 && this._lastValue.length() === 0;
+        return this._value.x === 1 && this._lastValue.x === 0;
     }
     public get isJustReleased(): boolean {
-        return this._value.length() === 0 && this._lastValue.length() > 0;
+        return this._value.x === 0 && this._lastValue.x === 1;
     }
     public get normalizedVector(): THREE.Vector2 {
         return this._value.clone().normalize();
     }
     public get normalizedValue(): number {
-        return this._value.length();
+        return this.normalizedVector.length();
     }
 
     // toString()
@@ -66,6 +80,11 @@ export class Controls {
     private _controls: Set<string> = new Set<string>();
     private _states: Map<string, ControlState> = new Map<string, ControlState>();
 
+    public maintenance(delta: number): void {
+        for (const state of this._states.values()) {
+            state.processDirty();
+        }
+    }
     public get(key: string): ControlState {
         if (!this._controls.has(key)) {
             throw new Error(`Control ${key} does not exist`);
@@ -75,7 +94,7 @@ export class Controls {
     }
     public keyboardKey(control: string, key: string): void {
         if (this._controls.has(control)) {
-            throw new Error(`Key ${key} is already bound to a control`);
+            throw new Error(`Control ${key} is already bound to a key (or axis)`);
         }
         this._controls.add(control);
         this._states.set(control, new ControlState());
