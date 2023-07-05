@@ -24,6 +24,7 @@ export interface CreateMeshResult {
     uv: Float32Array;
     normal: Float32Array;
     index: Uint16Array;
+    color: Float32Array;
 }
 
 /** Used to get the chunk data of a neighbor chunk. */
@@ -68,6 +69,7 @@ export function createChunkMesh(
     const indices: number[] = [];
     const uvs: number[] = [];
     const normals: number[] = [];
+    const colors: number[] = [];
     const width = options.width;
     const height = options.height || width;
     const depth = options.depth || width;
@@ -115,6 +117,12 @@ export function createChunkMesh(
                     options.data.backUV[current * 2 + 1] * uvScale
                 ) : topUV;
 
+                const color = new THREE.Vector3(
+                    Math.random(),
+                    Math.random(),
+                    Math.random()
+                );
+
                 if (renderFront) {
                     vertices.push(
                         // Front face
@@ -137,6 +145,12 @@ export function createChunkMesh(
                         0, 0, 1,
                         0, 0, 1,
                         0, 0, 1
+                    );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
                     );
                 }
                 if (renderBack) {
@@ -162,6 +176,12 @@ export function createChunkMesh(
                         0, 0, -1,
                         0, 0, -1
                     );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
+                    );
                 }
                 if (renderLeft) {
                     vertices.push(
@@ -185,6 +205,12 @@ export function createChunkMesh(
                         -1, 0, 0,
                         -1, 0, 0,
                         -1, 0, 0
+                    );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
                     );
                 }
                 if (renderRight) {
@@ -211,6 +237,12 @@ export function createChunkMesh(
                         1, 0, 0,
                         1, 0, 0
                     );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
+                    );
                 }
                 if (renderTop) {
                     vertices.push(
@@ -234,6 +266,12 @@ export function createChunkMesh(
                         0, 1, 0,
                         0, 1, 0,
                         0, 1, 0
+                    );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
                     );
                 }
                 if (renderBottom) {
@@ -259,6 +297,12 @@ export function createChunkMesh(
                         0, -1, 0,
                         0, -1, 0
                     );
+                    colors.push(
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z,
+                        color.x, color.y, color.z
+                    );
                 }
             }
         }
@@ -269,11 +313,13 @@ export function createChunkMesh(
     const uv = new Float32Array(uvs);
     const normal = new Float32Array(normals);
     const index = new Uint16Array(indices);
+    const color = new Float32Array(colors);
 
     return {
         position,
         uv,
         normal,
-        index
+        index,
+        color
     };
 }

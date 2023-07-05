@@ -81,6 +81,7 @@ const chunkMesh = new THREE.BufferGeometry();
 chunkMesh.setAttribute('position', new THREE.BufferAttribute(chunkMeshData.position, 3));
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
+chunkMesh.setAttribute('color', new THREE.BufferAttribute(chunkMeshData.color, 3));
 chunkMesh.setIndex(new THREE.BufferAttribute(chunkMeshData.index, 1));
 const chunk = new THREE.Mesh(chunkMesh, material);
 scene.add(chunk);
