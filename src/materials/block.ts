@@ -3,9 +3,6 @@ import vertex from './block.vert';
 import fragment from './block.frag';
 
 export function blockMaterial(resolution: THREE.Vec2, texture: THREE.Texture): THREE.ShaderMaterial {
-    console.log(vertex);
-    console.log(fragment);
-
     return new THREE.ShaderMaterial({
         vertexShader: vertex,
         fragmentShader: fragment,

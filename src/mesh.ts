@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 
 export interface ChunkData {
-    type: Int16Array; // 0 = air
-    topUV: Int16Array;
-    bottomUV?: Int16Array;
-    leftUV?: Int16Array;
-    rightUV?: Int16Array;
-    frontUV?: Int16Array;
-    backUV?: Int16Array;
+    type: Uint16Array; // 0 = air
+    topUV: Uint16Array;
+    bottomUV?: Uint16Array;
+    leftUV?: Uint16Array;
+    rightUV?: Uint16Array;
+    frontUV?: Uint16Array;
+    backUV?: Uint16Array;
 }
 
 export interface CreateMeshOptions {
@@ -60,7 +60,7 @@ export function getBlockType(
     return 0;
 }
 
-export function createChunk(
+export function createChunkMesh(
     options: CreateMeshOptions
 ): CreateMeshResult {
     // Create cube face indices
@@ -71,7 +71,8 @@ export function createChunk(
     const width = options.width;
     const height = options.height || width;
     const depth = options.depth || width;
-    const uvScale = options.uvScale || 1;
+    const uvScale = options.uvScale || 0;
+
     let indexOffset = 0;
     for (let x = 0; x < width; x += 1) {
         for (let y = 0; y < height; y += 1) {
@@ -85,30 +86,34 @@ export function createChunk(
                 const renderTop = currentSolid && getBlockType(options, x, y + 1, z) === 0;
                 const renderBottom = currentSolid && getBlockType(options, x, y - 1, z) === 0;
 
+                const width = 1;
+                const height = 1;
+                const depth = 1;
+
                 const topUV = new THREE.Vector2(
                     options.data.topUV[current * 2] * uvScale,
                     options.data.topUV[current * 2 + 1] * uvScale
                 );
-                const bottomUV = new THREE.Vector2(
-                    options.data.bottomUV ? options.data.bottomUV[current * 2] * uvScale : topUV.x,
-                    options.data.bottomUV ? options.data.bottomUV[current * 2 + 1] * uvScale : topUV.y
-                );
-                const leftUV = new THREE.Vector2(
-                    options.data.leftUV ? options.data.leftUV[current * 2] * uvScale : topUV.x,
-                    options.data.leftUV ? options.data.leftUV[current * 2 + 1] * uvScale : topUV.y
-                );
-                const rightUV = new THREE.Vector2(
-                    options.data.rightUV ? options.data.rightUV[current * 2] * uvScale : topUV.x,
-                    options.data.rightUV ? options.data.rightUV[current * 2 + 1] * uvScale : topUV.y
-                );
-                const frontUV = new THREE.Vector2(
-                    options.data.frontUV ? options.data.frontUV[current * 2] * uvScale : topUV.x,
-                    options.data.frontUV ? options.data.frontUV[current * 2 + 1] * uvScale : topUV.y
-                );
-                const backUV = new THREE.Vector2(
-                    options.data.backUV ? options.data.backUV[current * 2] * uvScale : topUV.x,
-                    options.data.backUV ? options.data.backUV[current * 2 + 1] * uvScale : topUV.y
-                );
+                const bottomUV = options.data.bottomUV ? new THREE.Vector2(
+                    options.data.bottomUV[current * 2] * uvScale,
+                    options.data.bottomUV[current * 2 + 1] * uvScale
+                ) : topUV;
+                const leftUV = options.data.leftUV ? new THREE.Vector2(
+                    options.data.leftUV[current * 2] * uvScale,
+                    options.data.leftUV[current * 2 + 1] * uvScale
+                ) : topUV;
+                const rightUV = options.data.rightUV ? new THREE.Vector2(
+                    options.data.rightUV[current * 2] * uvScale,
+                    options.data.rightUV[current * 2 + 1] * uvScale
+                ) : topUV;
+                const frontUV = options.data.frontUV ? new THREE.Vector2(
+                    options.data.frontUV[current * 2] * uvScale,
+                    options.data.frontUV[current * 2 + 1] * uvScale
+                ) : topUV;
+                const backUV = options.data.backUV ? new THREE.Vector2(
+                    options.data.backUV[current * 2] * uvScale,
+                    options.data.backUV[current * 2 + 1] * uvScale
+                ) : topUV;
 
                 if (renderFront) {
                     vertices.push(
