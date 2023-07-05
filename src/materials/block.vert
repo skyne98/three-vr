@@ -1,5 +1,14 @@
-varying vec2 vUv;
-varying vec3 vColor;
+#version 300 es
+
+in vec3 position;
+in vec2 uv;
+in vec3 color;
+
+uniform mat4 projectionMatrix;
+uniform mat4 modelViewMatrix;
+
+out vec2 vUv;
+out vec3 vColor;
 
 void main(){
     vUv=uv;

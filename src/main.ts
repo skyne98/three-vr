@@ -59,8 +59,11 @@ let wireframe = false;
 // Load the texture
 const textureLoader = new THREE.TextureLoader();
 const texture = textureLoader.load(new URL('../materials/prototype/Green/texture_01.png', import.meta.url).href);
+// Projection matrix
+const projectionMatrix = camera.projectionMatrix.clone();
+const modelViewMatrix = camera.matrixWorldInverse.clone();
 // Generate a material
-const material = blockMaterial(new THREE.Vector2(1024, 1024), texture);
+const material = blockMaterial(new THREE.Vector2(1024, 1024), texture, projectionMatrix, modelViewMatrix);
 // Generate a chunk
 const chunkTypes = new Uint16Array(chunkSize * chunkSize * chunkSize);
 for (let i = 0; i < chunkTypes.length; i++) {
