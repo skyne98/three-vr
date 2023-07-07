@@ -20,11 +20,12 @@ export interface CreateMeshOptions {
 }
 
 export interface CreateMeshResult {
+    vertexId: Uint32Array;
+    quadId: Uint32Array;
     position: Float32Array;
     uv: Float32Array;
     normal: Float32Array;
     index: Uint16Array;
-    color: Float32Array;
 }
 
 /** Used to get the chunk data of a neighbor chunk. */
@@ -65,17 +66,18 @@ export function createChunkMesh(
     options: CreateMeshOptions
 ): CreateMeshResult {
     // Create cube face indices
+    const quadIds: number[] = [];
     const vertices: number[] = [];
     const indices: number[] = [];
     const uvs: number[] = [];
     const normals: number[] = [];
-    const colors: number[] = [];
     const width = options.width;
     const height = options.height || width;
     const depth = options.depth || width;
     const uvScale = options.uvScale || 0;
 
     let indexOffset = 0;
+    let quadIdOffset = 0;
     for (let x = 0; x < width; x += 1) {
         for (let y = 0; y < height; y += 1) {
             for (let z = 0; z < depth; z += 1) {
@@ -117,19 +119,12 @@ export function createChunkMesh(
                     options.data.backUV[current * 2 + 1] * uvScale
                 ) : topUV;
 
-                const color = new THREE.Vector3(
-                    Math.random(),
-                    Math.random(),
-                    Math.random()
-                );
-
                 if (renderFront) {
                     vertices.push(
-                        // Front face
-                        -width / 2 + x, -height / 2 + y, depth / 2 + z,  // 0
-                        width / 2 + x, -height / 2 + y, depth / 2 + z,  // 1
-                        width / 2 + x, height / 2 + y, depth / 2 + z,  // 2
-                        -width / 2 + x, height / 2 + y, depth / 2 + z,  // 3
+                        x, y, depth + z,
+                        width + x, y, depth + z,
+                        width + x, height + y, depth + z,
+                        x, height + y, depth + z,
                     );
                     indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
                     indexOffset += 4;
@@ -146,20 +141,15 @@ export function createChunkMesh(
                         0, 0, 1,
                         0, 0, 1
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
                 if (renderBack) {
                     vertices.push(
-                        // Back face
-                        -width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 4
-                        width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 5
-                        width / 2 + x, height / 2 + y, -depth / 2 + z,  // 6
-                        -width / 2 + x, height / 2 + y, -depth / 2 + z,  // 7
+                        x, y, z,
+                        width + x, y, z,
+                        width + x, height + y, z,
+                        x, height + y, z,
                     );
                     indices.push(0 + indexOffset, 2 + indexOffset, 1 + indexOffset, 0 + indexOffset, 3 + indexOffset, 2 + indexOffset);
                     indexOffset += 4;
@@ -176,20 +166,15 @@ export function createChunkMesh(
                         0, 0, -1,
                         0, 0, -1
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
                 if (renderLeft) {
                     vertices.push(
-                        // Left face
-                        -width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 8
-                        -width / 2 + x, -height / 2 + y, depth / 2 + z,  // 9
-                        -width / 2 + x, height / 2 + y, depth / 2 + z,  // 10
-                        -width / 2 + x, height / 2 + y, -depth / 2 + z,  // 11
+                        x, y, z,
+                        x, y, depth + z,
+                        x, height + y, depth + z,
+                        x, height + y, z,
                     );
                     indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
                     indexOffset += 4;
@@ -206,20 +191,15 @@ export function createChunkMesh(
                         -1, 0, 0,
                         -1, 0, 0
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
                 if (renderRight) {
                     vertices.push(
-                        // Right face
-                        width / 2 + x, -height / 2 + y, depth / 2 + z,  // 12
-                        width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 13
-                        width / 2 + x, height / 2 + y, -depth / 2 + z,  // 14
-                        width / 2 + x, height / 2 + y, depth / 2 + z,  // 15
+                        width + x, y, depth + z,
+                        width + x, y, z,
+                        width + x, height + y, z,
+                        width + x, height + y, depth + z,
                     );
                     indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
                     indexOffset += 4;
@@ -237,20 +217,15 @@ export function createChunkMesh(
                         1, 0, 0,
                         1, 0, 0
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
                 if (renderTop) {
                     vertices.push(
-                        // Top face
-                        -width / 2 + x, height / 2 + y, depth / 2 + z,  // 16
-                        width / 2 + x, height / 2 + y, depth / 2 + z,  // 17
-                        width / 2 + x, height / 2 + y, -depth / 2 + z,  // 18
-                        -width / 2 + x, height / 2 + y, -depth / 2 + z,  // 19
+                        x, height + y, depth + z,
+                        width + x, height + y, depth + z,
+                        width + x, height + y, z,
+                        x, height + y, z,
                     );
                     indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
                     indexOffset += 4;
@@ -267,20 +242,15 @@ export function createChunkMesh(
                         0, 1, 0,
                         0, 1, 0
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
                 if (renderBottom) {
                     vertices.push(
-                        // Bottom face
-                        -width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 20
-                        width / 2 + x, -height / 2 + y, -depth / 2 + z,  // 21
-                        width / 2 + x, -height / 2 + y, depth / 2 + z,  // 22
-                        -width / 2 + x, -height / 2 + y, depth / 2 + z   // 23
+                        x, y, z,
+                        width + x, y, z,
+                        width + x, y, depth + z,
+                        x, y, depth + z,
                     );
                     indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
                     indexOffset += 4;
@@ -297,29 +267,27 @@ export function createChunkMesh(
                         0, -1, 0,
                         0, -1, 0
                     );
-                    colors.push(
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z,
-                        color.x, color.y, color.z
-                    );
+                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
+                    quadIdOffset += 1;
                 }
             }
         }
     }
 
     // Create cube geometry
+    const vertexId = new Uint32Array(indices);
+    const quadId = new Uint32Array(quadIds);
     const position = new Float32Array(vertices);
     const uv = new Float32Array(uvs);
     const normal = new Float32Array(normals);
     const index = new Uint16Array(indices);
-    const color = new Float32Array(colors);
 
     return {
+        vertexId,
+        quadId,
         position,
         uv,
         normal,
         index,
-        color
     };
 }

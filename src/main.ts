@@ -8,6 +8,8 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
 import { createChunkMesh } from './mesh';
+import { TextureBuffer } from './data_texture';
+import { Perf } from './perf';
 
 // Test out the rapier3d library
 import('@dimforge/rapier3d').then((rapier) => {
@@ -18,13 +20,26 @@ import('@dimforge/rapier3d').then((rapier) => {
 const chunkSize = 16;
 
 const renderer = new THREE.WebGLRenderer({
-    precision: "lowp"
+    precision: "lowp",
+    antialias: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+// Print the platform capabilities
+console.log(`Max Attributes: ${renderer.capabilities.maxAttributes}`);
+console.log(`Max Uniforms: ${renderer.capabilities.maxVertexUniforms}/${renderer.capabilities.maxFragmentUniforms}`);
+if (renderer.capabilities.isWebGL2 == false) {
+    throw new Error('WebGL2 is not supported');
+}
+const gl = renderer.getContext() as WebGL2RenderingContext;
+// Get maximum uniform block size
+const maxUniformBlockSize = gl.getParameter(gl.MAX_UNIFORM_BLOCK_SIZE);
+console.log(`Max Uniform Block Size: ${maxUniformBlockSize}`);
+console.log(gl.RGBA8UI);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -44,7 +59,6 @@ const controls = new Keybinds();
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
-let lastTime = performance.now();
 // Add a wireframe control
 controls.keyboardKey('toggleWireframe', 'KeyF');
 
@@ -78,17 +92,98 @@ const chunkMeshData = createChunkMesh({
     uvScale: 1,
 });
 const chunkMesh = new THREE.BufferGeometry();
+const vertexIdAttribute = new THREE.BufferAttribute(chunkMeshData.vertexId, 1);
+(vertexIdAttribute as any).gpuType = THREE.UnsignedIntType;
+chunkMesh.setAttribute('vertexId', vertexIdAttribute);
+const quadIdAttribute = new THREE.BufferAttribute(chunkMeshData.quadId, 1);
+(quadIdAttribute as any).gpuType = THREE.UnsignedIntType;
+chunkMesh.setAttribute('quadId', quadIdAttribute);
 chunkMesh.setAttribute('position', new THREE.BufferAttribute(chunkMeshData.position, 3));
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
-chunkMesh.setAttribute('color', new THREE.BufferAttribute(chunkMeshData.color, 3));
 chunkMesh.setIndex(new THREE.BufferAttribute(chunkMeshData.index, 1));
+console.log(chunkMesh.attributes);
 const chunk = new THREE.Mesh(chunkMesh, material);
 scene.add(chunk);
 
-function loop() {
-    const time = performance.now();
-    const delta = (time - lastTime) / 1000;
+// Vertex calculation data (quad vertex positions and colors)
+const lightingData = new TextureBuffer(
+    chunkSize * chunkSize * chunkSize // blocks per chunk
+    * 6 // 6 sides per block
+    * (4 + 4) // 4 vertices per quad, 4 colors per quad
+    * 3 // vec3
+);
+// Fill the texture with data from the mesh as well as random colors
+for (let i = 0; i < chunkMeshData.quadId.length; i += 4) {
+    const quadId = chunkMeshData.quadId[i];
+
+    const vertexColor0 = new THREE.Color(0xff0000);
+    const vertexColor1 = new THREE.Color(Math.random(), Math.random(), Math.random());
+    const vertexColor2 = new THREE.Color(Math.random(), Math.random(), Math.random());
+    const vertexColor3 = new THREE.Color(Math.random(), Math.random(), Math.random());
+
+    const vertexId0 = i;
+    const vertexPosition0 = new THREE.Vector3(
+        chunkMeshData.position[vertexId0 * 3 + 0],
+        chunkMeshData.position[vertexId0 * 3 + 1],
+        chunkMeshData.position[vertexId0 * 3 + 2]
+    );
+    const vertexId1 = i + 1;
+    const vertexPosition1 = new THREE.Vector3(
+        chunkMeshData.position[vertexId1 * 3 + 0],
+        chunkMeshData.position[vertexId1 * 3 + 1],
+        chunkMeshData.position[vertexId1 * 3 + 2]
+    );
+    const vertexId2 = i + 2;
+    const vertexPosition2 = new THREE.Vector3(
+        chunkMeshData.position[vertexId2 * 3 + 0],
+        chunkMeshData.position[vertexId2 * 3 + 1],
+        chunkMeshData.position[vertexId2 * 3 + 2]
+    );
+    const vertexId3 = i + 3;
+    const vertexPosition3 = new THREE.Vector3(
+        chunkMeshData.position[vertexId3 * 3 + 0],
+        chunkMeshData.position[vertexId3 * 3 + 1],
+        chunkMeshData.position[vertexId3 * 3 + 2]
+    );
+
+    const quadStructureSize = 8 * 3;
+    const quadStructureOffset = quadStructureSize * quadId;
+    const vec3Size = 3;
+    // Vertex 0
+    lightingData.setVec3Value(quadStructureOffset + vec3Size * 0, vertexPosition0);
+    lightingData.setColorValue(quadStructureOffset + vec3Size * 1, vertexColor0);
+    // Vertex 1
+    lightingData.setVec3Value(quadStructureOffset + vec3Size * 2, vertexPosition1);
+    lightingData.setColorValue(quadStructureOffset + vec3Size * 3, vertexColor1);
+    // Vertex 2
+    lightingData.setVec3Value(quadStructureOffset + vec3Size * 4, vertexPosition2);
+    lightingData.setColorValue(quadStructureOffset + vec3Size * 5, vertexColor2);
+    // Vertex 3
+    lightingData.setVec3Value(quadStructureOffset + vec3Size * 6, vertexPosition3);
+    lightingData.setColorValue(quadStructureOffset + vec3Size * 7, vertexColor3);
+}
+// Set first 0 bytes to 0 for testing
+lightingData.setIntValue(345, 1);
+// Upload the data to the GPU
+lightingData.updateTexture();
+// Set it to the material as a uniform
+material.uniforms.uLightingData = {
+    value: lightingData.texture
+};
+material.uniforms.uLightingDataSize = {
+    value: lightingData.width
+};
+material.needsUpdate = true;
+
+// Better performance monitoring
+const perf = new Perf(renderer, scene, camera);
+let lastTime = 0;
+
+renderer.setAnimationLoop((time) => {
+    perf.start(time);
+
+    const delta = time - lastTime;
     lastTime = time;
     stats.update();
     composer.render();
@@ -105,8 +200,7 @@ function loop() {
         });
     }
 
-    controls.maintenance(delta);
-    requestAnimationFrame(loop);
-}
+    controls.maintenance(time);
 
-loop();
+    perf.end(time);
+});

@@ -1,19 +1,22 @@
 #version 300 es
 
+in uint vertexId;
+in uint quadId;
 in vec3 position;
 in vec2 uv;
-in vec3 color;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 
+out float vVertexId;
+flat out uint vQuadId;
+out vec3 vPosition;
 out vec2 vUv;
-out vec3 vColor;
 
 void main(){
+    vVertexId=float(vertexId);
+    vQuadId=quadId;
+    vPosition=position;
     vUv=uv;
-    vColor=color;
-    int index=gl_VertexID;
-    float indexIsEven=mod(float(index),2.);
     gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);
 }
