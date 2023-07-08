@@ -1,5 +1,9 @@
 #version 300 es
 
+precision mediump float;
+precision mediump int;
+precision mediump usampler2D;
+
 in uint vertexId;
 in uint quadId;
 in vec3 position;

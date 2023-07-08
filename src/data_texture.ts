@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class TextureBuffer {
-    data: Uint32Array;
+    data: Uint16Array;
     width: number;
     height: number;
     texture: THREE.DataTexture;
@@ -18,11 +18,12 @@ export class TextureBuffer {
         }
 
         const size = TextureBuffer.getOptimalSizeForLength(length);
-        this.data = new Uint32Array(size * size);
+        console.log(`DataTexture: creating texture of size ${size}x${size} for length ${length}`);
+        this.data = new Uint16Array(size * size);
         this.width = size;
         this.height = size;
-        this.texture = new THREE.DataTexture(this.data, size, size, THREE.RedIntegerFormat, THREE.UnsignedIntType);
-        this.texture.internalFormat = 'R32UI';
+        this.texture = new THREE.DataTexture(this.data, size, size, THREE.RedIntegerFormat, THREE.UnsignedShortType);
+        this.texture.internalFormat = 'R16UI';
     }
 
     // Setting the data

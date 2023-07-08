@@ -1,7 +1,7 @@
 #version 300 es
 
-precision mediump float;
-precision mediump int;
+precision lowp float;
+precision highp int;
 precision mediump usampler2D;
 
 in float vVertexId;
@@ -66,20 +66,20 @@ void main(){
     // fragColor=vec4(texColor.rgb*color,texColor.a);
     
     // Alternative
-    // float distanceTo0=length(vPosition-vec3(getVertexPos(vQuadId,0u)));
-    // float distanceTo1=length(vPosition-vec3(getVertexPos(vQuadId,1u)));
-    // float distanceTo2=length(vPosition-vec3(getVertexPos(vQuadId,2u)));
-    // float distanceTo3=length(vPosition-vec3(getVertexPos(vQuadId,3u)));
-    // float minDistance=min(min(distanceTo0,distanceTo1),min(distanceTo2,distanceTo3));
+    float distanceTo0=length(vPosition-vec3(getVertexPos(vQuadId,0u)));
+    float distanceTo1=length(vPosition-vec3(getVertexPos(vQuadId,1u)));
+    float distanceTo2=length(vPosition-vec3(getVertexPos(vQuadId,2u)));
+    float distanceTo3=length(vPosition-vec3(getVertexPos(vQuadId,3u)));
+    float minDistance=min(min(distanceTo0,distanceTo1),min(distanceTo2,distanceTo3));
     
-    // vec3 color0=getVertexColor(vQuadId,0u)*(1.-minDistance/distanceTo0);
-    // vec3 color1=getVertexColor(vQuadId,1u)*(1.-minDistance/distanceTo1);
-    // vec3 color2=getVertexColor(vQuadId,2u)*(1.-minDistance/distanceTo2);
-    // vec3 color3=getVertexColor(vQuadId,3u)*(1.-minDistance/distanceTo3);
+    vec3 color0=getVertexColor(vQuadId,0u)*(1.-minDistance/distanceTo0);
+    vec3 color1=getVertexColor(vQuadId,1u)*(1.-minDistance/distanceTo1);
+    vec3 color2=getVertexColor(vQuadId,2u)*(1.-minDistance/distanceTo2);
+    vec3 color3=getVertexColor(vQuadId,3u)*(1.-minDistance/distanceTo3);
     
-    // vec3 color=color0+color1+color2+color3;
-    // color*=.25;
-    // fragColor=vec4(texColor.rgb*color,texColor.a);
+    vec3 color=color0+color1+color2+color3;
+    color*=.25;
+    fragColor=vec4(texColor.rgb*color,texColor.a);
     
     // Alternative, where one color is chosen from the closest vertex out of all 4
     // float distanceTo0=length(vPosition-vec3(getVertexPos(vQuadId,0u)));
@@ -136,17 +136,17 @@ void main(){
     // fragColor=vec4(vec3(vertexPos0f.x/16.),1);
     
     // Color red if vVertexPos0.x is exactly 0
-    uvec3 vertexPos0=getVertexPos(vQuadId,0u);
-    vec3 vertexPos0f=vec3(vertexPos0);
-    if(vertexPos0f.x==0.){
-        fragColor=vec4(1,0,0,1);
-    }else{
-        if(vertexPos0f.x==1.){
-            fragColor=vec4(0,1,0,1);
-        }else{
-            fragColor=vec4(0,0,1,1);
-        }
-    }
+    // uvec3 vertexPos0=getVertexPos(vQuadId,0u);
+    // vec3 vertexPos0f=vec3(vertexPos0);
+    // if(vertexPos0f.x==0.){
+        //     fragColor=vec4(1,0,0,1);
+    // }else{
+        //     if(vertexPos0f.x==1.){
+            //         fragColor=vec4(0,1,0,1);
+        //     }else{
+            //         fragColor=vec4(0,0,1,1);
+        //     }
+    // }
     
     // Now based on average of all 4 vertex positions
     // uint quadId=vQuadId;
@@ -158,7 +158,7 @@ void main(){
     // fragColor=vec4(avgPos/16.,1);
     
     // // Now based on the vertex id (range from 0-16*16*16*6*4)
-    // uint vertexId=vVertexId;
+    // float vertexId=vVertexId;
     // vec3 vertexIdf=vec3(vertexId);
     // vec3 vertexIdfNormalized=vertexIdf/vec3(16*16*16*6*4);
     // fragColor=vec4(vertexIdfNormalized,1);
