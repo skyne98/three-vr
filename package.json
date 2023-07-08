@@ -23,10 +23,6 @@
   },
   "dependencies": {
     "@dimforge/rapier3d": "*",
-    "@react-three/fiber": "^8.13.4",
-    "r3f-perf": "^7.1.2",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "simplex-noise": "^4.0.1",
     "three": "^0.153.0",
     "uuid": "^9.0.0"

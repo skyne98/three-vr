@@ -9,7 +9,6 @@ import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
 import { createChunkMesh } from './mesh';
 import { TextureBuffer } from './data_texture';
-import { Perf } from './perf';
 
 // Test out the rapier3d library
 import('@dimforge/rapier3d').then((rapier) => {
@@ -20,7 +19,7 @@ import('@dimforge/rapier3d').then((rapier) => {
 const chunkSize = 16;
 
 const renderer = new THREE.WebGLRenderer({
-    precision: "lowp",
+    precision: 'lowp',
     antialias: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -175,14 +174,9 @@ material.uniforms.uLightingDataSize = {
     value: lightingData.width
 };
 material.needsUpdate = true;
-
-// Better performance monitoring
-const perf = new Perf(renderer, scene, camera);
 let lastTime = 0;
 
 renderer.setAnimationLoop((time) => {
-    perf.start(time);
-
     const delta = time - lastTime;
     lastTime = time;
     stats.update();
@@ -201,6 +195,4 @@ renderer.setAnimationLoop((time) => {
     }
 
     controls.maintenance(time);
-
-    perf.end(time);
 });
