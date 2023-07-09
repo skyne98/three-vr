@@ -116,7 +116,7 @@ const lightingData = new TextureBuffer(
 for (let i = 0; i < chunkMeshData.quadId.length; i += 4) {
     const quadId = chunkMeshData.quadId[i];
 
-    const vertexColor0 = new THREE.Color(0xff0000);
+    const vertexColor0 = new THREE.Color(0x000000);
     const vertexColor1 = new THREE.Color(Math.random(), Math.random(), Math.random());
     const vertexColor2 = new THREE.Color(Math.random(), Math.random(), Math.random());
     const vertexColor3 = new THREE.Color(Math.random(), Math.random(), Math.random());
