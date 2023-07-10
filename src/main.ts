@@ -9,6 +9,7 @@ import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
 import { createChunkMesh } from './mesh';
 import { TextureBuffer } from './data_texture';
+import { buildRaymarchingPass, raymarchingPassUpdateUniforms } from './postprocess/raymarch';
 
 // Test out the rapier3d library
 import('@dimforge/rapier3d').then((rapier) => {
@@ -65,6 +66,10 @@ controls.keyboardKey('toggleWireframe', 'KeyF');
 const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
+
+// Raymarching
+const raymarchPass = buildRaymarchingPass();
+composer.addPass(raymarchPass);
 
 // Wireframe
 let wireframe = false;
@@ -182,6 +187,9 @@ renderer.setAnimationLoop((time) => {
     stats.update();
     composer.render();
     orbitControls.update();
+
+    // Update the raymarcher
+    raymarchingPassUpdateUniforms(raymarchPass, camera);
 
     // Check the wireframe control
     if (controls.get('toggleWireframe').isJustReleased) {
