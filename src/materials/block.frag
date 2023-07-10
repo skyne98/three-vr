@@ -1,7 +1,6 @@
 #version 300 es
 
-precision lowp float;
-precision highp int;
+precision highp float;
 
 in highp float vVertexId;
 flat in uint vQuadId;
@@ -14,7 +13,7 @@ uniform mediump usampler2D uLightingData;// rgba, unsigned byte, { vec3 vPos0 ..
 uniform vec2 uTextureSize;
 uniform vec2 uResolution;
 
-out vec4 fragColor;
+out highp vec4 fragColor;
 
 // Functions to get data from the data texture
 uint getSamplerData(uint pixelIndex,mediump usampler2D data,uint dataSize){
@@ -65,10 +64,13 @@ void main(){
     // fragColor=vec4(texColor.rgb*color,texColor.a);
     
     // Alternative
-    float distanceTo0=length(vPosition-vec3(getVertexPos(vQuadId,0u)));
-    float distanceTo1=length(vPosition-vec3(getVertexPos(vQuadId,1u)));
-    float distanceTo2=length(vPosition-vec3(getVertexPos(vQuadId,2u)));
-    float distanceTo3=length(vPosition-vec3(getVertexPos(vQuadId,3u)));
+    vec3 position=vec3(vPosition);
+    fragColor=vec4(position/16.,1);
+    return;
+    float distanceTo0=length(position-vec3(getVertexPos(vQuadId,0u)));
+    float distanceTo1=length(position-vec3(getVertexPos(vQuadId,1u)));
+    float distanceTo2=length(position-vec3(getVertexPos(vQuadId,2u)));
+    float distanceTo3=length(position-vec3(getVertexPos(vQuadId,3u)));
     float minDistance=min(min(distanceTo0,distanceTo1),min(distanceTo2,distanceTo3));
     
     vec3 color0=getVertexColor(vQuadId,0u)*(1.-minDistance/distanceTo0);

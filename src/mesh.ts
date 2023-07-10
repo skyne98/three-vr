@@ -22,7 +22,7 @@ export interface CreateMeshOptions {
 export interface CreateMeshResult {
     vertexId: Uint32Array;
     quadId: Uint32Array;
-    position: Float32Array;
+    position: Uint8Array;
     uv: Float32Array;
     normal: Float32Array;
     index: Uint16Array;
@@ -277,7 +277,7 @@ export function createChunkMesh(
     // Create cube geometry
     const vertexId = new Uint32Array(indices);
     const quadId = new Uint32Array(quadIds);
-    const position = new Float32Array(vertices);
+    const position = new Uint8Array(vertices);
     const uv = new Float32Array(uvs);
     const normal = new Float32Array(normals);
     const index = new Uint16Array(indices);

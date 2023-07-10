@@ -1,12 +1,8 @@
 #version 300 es
 
-precision mediump float;
-precision mediump int;
-precision mediump usampler2D;
-
 in uint vertexId;
 in uint quadId;
-in vec3 position;
+in uvec3 position;
 in vec2 uv;
 
 uniform mat4 projectionMatrix;
@@ -20,7 +16,7 @@ out vec2 vUv;
 void main(){
     vVertexId=float(vertexId);
     vQuadId=quadId;
-    vPosition=position;
+    vPosition=vec3(position);
     vUv=uv;
     gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);
 }
