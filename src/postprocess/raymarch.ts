@@ -73,11 +73,21 @@ export function buildRaymarchingPass() {
             }
             float boxDistanceZeroOrigin( in vec3 p, in vec3 rad )
             {
-                vec3 point = transformPosition(p, -rad, vec3(0.0, 0.0, 0.0), vec3(1.0));
+                vec3 point = transformPosition(p, -rad, vec3(0.), vec3(1.0));
                 return boxDistance(point, rad);
             }
+            float sphereDistance( vec3 p, float s )
+            {
+                return length(p)-s;
+            }
+            float sphereDistanceZeroOrigin( vec3 p, float s )
+            {
+                vec3 point = transformPosition(p, -vec3(s), vec3(0.), vec3(1.0));
+                return sphereDistance(point, s);
+            }
             float sceneDist( vec3 p ) {
-                return boxDistanceZeroOrigin(p, vec3(8.0));
+                // return boxDistanceZeroOrigin(p, vec3(8.0));
+                return sphereDistanceZeroOrigin(p, 8.0);
             }
 
             // Utilities

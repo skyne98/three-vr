@@ -46,8 +46,8 @@ const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.inner
 camera.position.copy(new THREE.Vector3(20, 20, 20));
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
-// orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
-orbitControls.target = new THREE.Vector3(0, 0, 0);
+orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
+// orbitControls.target = new THREE.Vector3(0, 0, 0);
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
