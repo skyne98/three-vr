@@ -65,7 +65,7 @@ void main(){
     
     // Alternative
     vec3 position=vec3(vPosition);
-    fragColor=vec4(position/16.,1);
+    fragColor=vec4(position/64.,1);
     return;
     float distanceTo0=length(position-vec3(getVertexPos(vQuadId,0u)));
     float distanceTo1=length(position-vec3(getVertexPos(vQuadId,1u)));

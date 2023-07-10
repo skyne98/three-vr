@@ -20,12 +20,10 @@ export interface CreateMeshOptions {
 }
 
 export interface CreateMeshResult {
-    vertexId: Uint32Array;
     quadId: Uint32Array;
     position: Uint8Array;
     uv: Float32Array;
     normal: Float32Array;
-    index: Uint16Array;
 }
 
 /** Used to get the chunk data of a neighbor chunk. */
@@ -68,7 +66,6 @@ export function createChunkMesh(
     // Create cube face indices
     const quadIds: number[] = [];
     const vertices: number[] = [];
-    const indices: number[] = [];
     const uvs: number[] = [];
     const normals: number[] = [];
     const width = options.width;
@@ -120,14 +117,15 @@ export function createChunkMesh(
                 ) : topUV;
 
                 if (renderFront) {
+                    // pointing towards true north (z+)
                     vertices.push(
-                        x, y, depth + z,
-                        width + x, y, depth + z,
-                        width + x, height + y, depth + z,
-                        x, height + y, depth + z,
+                        x, y, depth + z, // 0
+                        width + x, y, depth + z, // 1
+                        width + x, height + y, depth + z, // 2
+                        x, y, depth + z, // 0
+                        width + x, height + y, depth + z, // 2
+                        x, height + y, depth + z, // 3
                     );
-                    indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         frontUV.x, frontUV.y,
                         frontUV.x + uvScale, frontUV.y,
@@ -146,13 +144,13 @@ export function createChunkMesh(
                 }
                 if (renderBack) {
                     vertices.push(
-                        x, y, z,
-                        width + x, y, z,
-                        width + x, height + y, z,
-                        x, height + y, z,
+                        x, y, z, // 0
+                        width + x, height + y, z, // 2
+                        width + x, y, z, // 1
+                        x, y, z, // 0
+                        x, height + y, z, // 3
+                        width + x, height + y, z, // 2
                     );
-                    indices.push(0 + indexOffset, 2 + indexOffset, 1 + indexOffset, 0 + indexOffset, 3 + indexOffset, 2 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         backUV.x + uvScale, backUV.y,
                         backUV.x, backUV.y,
@@ -171,13 +169,13 @@ export function createChunkMesh(
                 }
                 if (renderLeft) {
                     vertices.push(
-                        x, y, z,
-                        x, y, depth + z,
-                        x, height + y, depth + z,
-                        x, height + y, z,
+                        x, y, z, // 0
+                        x, y, depth + z, // 1
+                        x, height + y, depth + z, // 2
+                        x, y, z, // 0
+                        x, height + y, depth + z, // 2
+                        x, height + y, z, // 3
                     );
-                    indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         leftUV.x, leftUV.y,
                         leftUV.x + uvScale, leftUV.y,
@@ -196,13 +194,13 @@ export function createChunkMesh(
                 }
                 if (renderRight) {
                     vertices.push(
-                        width + x, y, depth + z,
-                        width + x, y, z,
-                        width + x, height + y, z,
-                        width + x, height + y, depth + z,
+                        width + x, y, depth + z, // 0
+                        width + x, y, z, // 1
+                        width + x, height + y, z, // 2
+                        width + x, y, depth + z, // 0
+                        width + x, height + y, z, // 2
+                        width + x, height + y, depth + z, // 3
                     );
-                    indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         // Right face
                         rightUV.x, rightUV.y,
@@ -222,13 +220,13 @@ export function createChunkMesh(
                 }
                 if (renderTop) {
                     vertices.push(
-                        x, height + y, depth + z,
-                        width + x, height + y, depth + z,
-                        width + x, height + y, z,
-                        x, height + y, z,
+                        x, height + y, depth + z, // 0
+                        width + x, height + y, depth + z, // 1
+                        width + x, height + y, z, // 2
+                        x, height + y, depth + z, // 0
+                        width + x, height + y, z, // 2
+                        x, height + y, z, // 3
                     );
-                    indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         topUV.x, topUV.y,
                         topUV.x + uvScale, topUV.y,
@@ -247,13 +245,13 @@ export function createChunkMesh(
                 }
                 if (renderBottom) {
                     vertices.push(
-                        x, y, z,
-                        width + x, y, z,
-                        width + x, y, depth + z,
-                        x, y, depth + z,
+                        x, y, z, // 0
+                        width + x, y, z, // 1
+                        width + x, y, depth + z, // 2
+                        x, y, z, // 0
+                        width + x, y, depth + z, // 2
+                        x, y, depth + z, // 3
                     );
-                    indices.push(0 + indexOffset, 1 + indexOffset, 2 + indexOffset, 0 + indexOffset, 2 + indexOffset, 3 + indexOffset);
-                    indexOffset += 4;
                     uvs.push(
                         bottomUV.x, bottomUV.y,
                         bottomUV.x + uvScale, bottomUV.y,
@@ -275,19 +273,15 @@ export function createChunkMesh(
     }
 
     // Create cube geometry
-    const vertexId = new Uint32Array(indices);
     const quadId = new Uint32Array(quadIds);
     const position = new Uint8Array(vertices);
     const uv = new Float32Array(uvs);
     const normal = new Float32Array(normals);
-    const index = new Uint16Array(indices);
 
     return {
-        vertexId,
         quadId,
         position,
         uv,
         normal,
-        index,
     };
 }

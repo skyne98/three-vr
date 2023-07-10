@@ -4,6 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { GUI } from 'dat.gui';
 
 import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
@@ -16,10 +17,9 @@ import('@dimforge/rapier3d').then((rapier) => {
 });
 
 // CONSTANTS
-const chunkSize = 16;
+const chunkSize = 64;
 
 const renderer = new THREE.WebGLRenderer({
-    precision: 'lowp',
     antialias: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -29,8 +29,10 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // Print the platform capabilities
+console.log(`Using WebGL${renderer.capabilities.isWebGL2 ? '2' : '1'}`);
 console.log(`Max Attributes: ${renderer.capabilities.maxAttributes}`);
 console.log(`Max Uniforms: ${renderer.capabilities.maxVertexUniforms}/${renderer.capabilities.maxFragmentUniforms}`);
+console.log(`Max Precision: ${renderer.capabilities.precision}`);
 if (renderer.capabilities.isWebGL2 == false) {
     throw new Error('WebGL2 is not supported');
 }
@@ -42,7 +44,7 @@ console.log(gl.RGBA8UI);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.copy(new THREE.Vector3(20, 20, 20));
+camera.position.copy(new THREE.Vector3(70, 70, 70));
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
@@ -119,8 +121,6 @@ function humanSize(val) { // starts with bytes
     return Math.max(val, 0.1).toFixed(1) + units[i];
 };
 
-const vertexIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.vertexId, 1);
-chunkMesh.setAttribute('vertexId', vertexIdAttribute);
 const quadIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.quadId, 1);
 chunkMesh.setAttribute('quadId', quadIdAttribute);
 const positionAttribute = new THREE.Uint8BufferAttribute(chunkMeshData.position, 3);
@@ -136,7 +136,6 @@ positionAttribute.onUpload(() => {
 chunkMesh.setAttribute('position', positionAttribute);
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
-chunkMesh.setIndex(new THREE.BufferAttribute(chunkMeshData.index, 1));
 console.log(chunkMesh.attributes);
 const chunk = new THREE.Mesh(chunkMesh, material);
 scene.add(chunk);
@@ -210,8 +209,16 @@ material.uniforms.uLightingDataSize = {
     value: lightingData.width
 };
 material.needsUpdate = true;
-let lastTime = 0;
 
+// GUI
+const gui = new GUI();
+const statsObj = {
+    'test': 42
+};
+const statsFolder = gui.addFolder('Stats');
+statsFolder.add(statsObj, 'test').listen();
+
+let lastTime = 0;
 renderer.setAnimationLoop((time) => {
     const delta = time - lastTime;
     lastTime = time;

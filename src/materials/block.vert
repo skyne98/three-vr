@@ -1,6 +1,5 @@
 #version 300 es
 
-in uint vertexId;
 in uint quadId;
 in uvec3 position;
 in vec2 uv;
@@ -14,7 +13,6 @@ out vec3 vPosition;
 out vec2 vUv;
 
 void main(){
-    vVertexId=float(vertexId);
     vQuadId=quadId;
     vPosition=vec3(position);
     vUv=uv;
