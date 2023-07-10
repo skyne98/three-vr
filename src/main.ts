@@ -91,14 +91,48 @@ const chunkMeshData = createChunkMesh({
     uvScale: 1,
 });
 const chunkMesh = new THREE.BufferGeometry();
-const vertexIdAttribute = new THREE.BufferAttribute(chunkMeshData.vertexId, 1);
-(vertexIdAttribute as any).gpuType = THREE.UnsignedIntType;
+
+function getAttributeSize(attribute: THREE.BufferAttribute) {
+    let a = 1;
+
+    if (attribute instanceof THREE.Uint8BufferAttribute) {
+        a = 1;
+    } else if (attribute instanceof THREE.Uint16BufferAttribute) {
+        a = 2;
+    } else if (attribute instanceof THREE.Uint32BufferAttribute) {
+        a = 4;
+    } else if (attribute instanceof THREE.Float32BufferAttribute) {
+        a = 4;
+    } else {
+        throw new Error('Unknown attribute type');
+    }
+
+    return attribute.count * attribute.itemSize * a;
+}
+function humanSize(val) { // starts with bytes
+    var i = 0;
+    var units = 'B KB MB GB'.split(' ');
+    while (val > 1024) {
+        val = val / 1024;
+        i++;
+    }
+    return Math.max(val, 0.1).toFixed(1) + units[i];
+};
+
+const vertexIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.vertexId, 1);
 chunkMesh.setAttribute('vertexId', vertexIdAttribute);
-const quadIdAttribute = new THREE.BufferAttribute(chunkMeshData.quadId, 1);
-(quadIdAttribute as any).gpuType = THREE.UnsignedIntType;
+const quadIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.quadId, 1);
 chunkMesh.setAttribute('quadId', quadIdAttribute);
-const positionAttribute = new THREE.BufferAttribute(chunkMeshData.position, 3);
+const positionAttribute = new THREE.Uint8BufferAttribute(chunkMeshData.position, 3);
+positionAttribute.name = 'position attribute';
 (positionAttribute as any).gpuType = THREE.IntType;
+const positionAttributeUploadStart = performance.now();
+positionAttribute.onUpload(() => {
+    const positionAttributeUploadEnd = performance.now();
+    const size = humanSize(getAttributeSize(positionAttribute));
+    const name = positionAttribute.name;
+    console.log(`Uploaded ${name} (${size}) in ${positionAttributeUploadEnd - positionAttributeUploadStart}ms`);
+});
 chunkMesh.setAttribute('position', positionAttribute);
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
