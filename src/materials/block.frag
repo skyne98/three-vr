@@ -24,5 +24,8 @@ uint getSamplerData(uint pixelIndex,mediump usampler2D data,uint dataSize){
 }
 
 void main(){
-    fragColor=vec4(1.);
+    // display the normals
+    vec3 normal=normalize(cross(dFdx(vPosition),dFdy(vPosition)));
+    vec3 displayNormal=normal*.5+.5;
+    fragColor=vec4(displayNormal,1.);
 }

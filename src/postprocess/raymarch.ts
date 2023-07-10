@@ -48,17 +48,39 @@ export function buildRaymarchingPass() {
 
             const float EPS = 0.001;
 
+            float dot2( in vec2 v ) { return dot(v,v); }
+            float dot2( in vec3 v ) { return dot(v,v); }
+            float ndot( in vec2 a, in vec2 b ) { return a.x*b.x - a.y*b.y; }
             float maxcomp(vec3 v) {
                 return max(max (v.x, v.y), v.z);
             }
+
+            // Transforms
+            vec3 transformPosition( in vec3 p, in vec3 t, in vec3 r, in vec3 s ) {
+                return s * (p * mat3(
+                    cos(r.y) * cos(r.z), cos(r.z) * sin(r.x) * sin(r.y) - cos(r.x) * sin(r.z), sin(r.x) * sin(r.z) + cos(r.x) * cos(r.z) * sin(r.y),
+                    cos(r.y) * sin(r.z), cos(r.x) * cos(r.z) + sin(r.x) * sin(r.y) * sin(r.z), cos(r.x) * sin(r.y) * sin(r.z) - cos(r.z) * sin(r.x),
+                    -sin(r.y), cos(r.y) * sin(r.x), cos(r.x) * cos(r.y)
+                ) + t);
+            }
+
+            // Distance Functions
+            // https://iquilezles.org/articles/distfunctions
             float boxDistance( in vec3 p, in vec3 rad ) 
             {
                 vec3 d = abs(p)-rad;
                 return length(max(d,0.0)) + min(maxcomp(d),0.0);
             }
-            float sceneDist( vec3 p ) {
-                return boxDistance(p, vec3(8.0));
+            float boxDistanceZeroOrigin( in vec3 p, in vec3 rad )
+            {
+                vec3 point = transformPosition(p, -rad, vec3(0.0, 0.0, 0.0), vec3(1.0));
+                return boxDistance(point, rad);
             }
+            float sceneDist( vec3 p ) {
+                return boxDistanceZeroOrigin(p, vec3(8.0));
+            }
+
+            // Utilities
             vec3 getNormal( vec3 p ) {
 				return normalize(vec3(
 					sceneDist(p + vec3( EPS, 0.0, 0.0 ) ) - sceneDist(p + vec3( -EPS, 0.0, 0.0 ) ),
@@ -86,7 +108,7 @@ export function buildRaymarchingPass() {
                     if (d < 0.001) {
                         // calculate normal
                         vec3 normal = getNormal(p);
-                        fragColor = vec4(normal, 1.0);
+                        fragColor = vec4(normal * 0.5 + 0.5, 1.0);
                         return;
                     }
                     if (t > 50.0) {
