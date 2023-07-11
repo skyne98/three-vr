@@ -10,6 +10,8 @@ import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
 import { createChunkMesh } from './mesh';
 import { TextureBuffer } from './data_texture';
+import { humanSize } from './human';
+import { ChunkMesh } from './chunk_mesh';
 
 // Test out the rapier3d library
 import('@dimforge/rapier3d').then((rapier) => {
@@ -95,31 +97,8 @@ const chunkMeshData = createChunkMesh({
 const chunkMesh = new THREE.BufferGeometry();
 
 function getAttributeSize(attribute: THREE.BufferAttribute) {
-    let a = 1;
-
-    if (attribute instanceof THREE.Uint8BufferAttribute) {
-        a = 1;
-    } else if (attribute instanceof THREE.Uint16BufferAttribute) {
-        a = 2;
-    } else if (attribute instanceof THREE.Uint32BufferAttribute) {
-        a = 4;
-    } else if (attribute instanceof THREE.Float32BufferAttribute) {
-        a = 4;
-    } else {
-        throw new Error('Unknown attribute type');
-    }
-
-    return attribute.count * attribute.itemSize * a;
+    return attribute.array.length;
 }
-function humanSize(val) { // starts with bytes
-    var i = 0;
-    var units = 'B KB MB GB'.split(' ');
-    while (val > 1024) {
-        val = val / 1024;
-        i++;
-    }
-    return Math.max(val, 0.1).toFixed(1) + units[i];
-};
 
 const quadIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.quadId, 1);
 chunkMesh.setAttribute('quadId', quadIdAttribute);
@@ -137,7 +116,7 @@ chunkMesh.setAttribute('position', positionAttribute);
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
 console.log(chunkMesh.attributes);
-const chunk = new THREE.Mesh(chunkMesh, material);
+const chunk = new ChunkMesh(chunkMesh, material);
 scene.add(chunk);
 
 // GUI
