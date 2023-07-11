@@ -4,7 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
-import { GUI } from 'dat.gui';
+import { GUI } from 'lil-gui';
 
 import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
@@ -212,11 +212,24 @@ material.needsUpdate = true;
 
 // GUI
 const gui = new GUI();
-const statsObj = {
-    'test': 42
+const guiState = {
+    sayHi: () => {
+        console.log('Hi!');
+    },
+    get vertices() {
+        return chunkMesh.attributes.position.count;
+    },
+    get positionBufferSize() {
+        return humanSize(getAttributeSize(positionAttribute));
+    },
+    get texture() {
+        return texture;
+    }
 };
 const statsFolder = gui.addFolder('Stats');
-statsFolder.add(statsObj, 'test').listen();
+statsFolder.add(guiState, 'sayHi').name('Say Hi');
+statsFolder.add(guiState, 'vertices').listen().name('Vertices').disable(true);
+statsFolder.add(guiState, 'positionBufferSize').listen().name('Position Buffer Size').disable(true);
 
 let lastTime = 0;
 renderer.setAnimationLoop((time) => {
