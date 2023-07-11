@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class ChunkMesh extends THREE.Mesh {
-    constructor() {
-        super();
+    constructor(bufferGeometry: THREE.BufferGeometry, material: THREE.Material) {
+        super(bufferGeometry, material);
     }
 }
