@@ -1,3 +1,4 @@
+import '../vite-env.d.ts';
 import * as THREE from 'three';
 import vertex from './block.vert';
 import fragment from './block.frag';
