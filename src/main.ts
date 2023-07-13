@@ -51,6 +51,7 @@ camera.position.copy(new THREE.Vector3(70, 70, 70));
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
+const nativeWindowSize = new THREE.Vector2(window.innerWidth, window.innerHeight);
 function resizeRenderer(
     internalWidth: number,
     internalHeight: number
@@ -61,12 +62,18 @@ function resizeRenderer(
     renderer.setPixelRatio(window.devicePixelRatio);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
-    renderer.domElement.style.width = window.innerWidth + 'px';
-    renderer.domElement.style.height = window.innerHeight + 'px';
+    renderer.domElement.style.width = nativeWindowSize.x + 'px';
+    renderer.domElement.style.height = nativeWindowSize.y + 'px';
+}
+function resizeToNativePercent(percent: number) {
+    const internalWidth = Math.round(nativeWindowSize.x * percent);
+    const internalHeight = Math.round(nativeWindowSize.y * percent);
+    resizeRenderer(internalWidth, internalHeight);
 }
 resizeRenderer(window.innerWidth, window.innerHeight);
 window.addEventListener('resize', () => {
-    resizeRenderer(window.innerWidth, window.innerHeight);
+    nativeWindowSize.set(window.innerWidth, window.innerHeight);
+    resizeRenderer(nativeWindowSize.x, nativeWindowSize.y);
 });
 
 const controls = new Keybinds();
@@ -145,17 +152,24 @@ const guiState = {
         return texture;
     },
     get resolution() {
-        return `${window.innerWidth}x${window.innerHeight}`;
+        const boundingClientRect = renderer.domElement.getBoundingClientRect();
+        return `${boundingClientRect.width}x${boundingClientRect.height}`;
     },
     get renderResolution() {
         const target = new THREE.Vector2();
         renderer.getSize(target);
         return `${target.x}x${target.y}`;
     },
+    get pixelRatio() {
+        return renderer.getPixelRatio();
+    },
 
     // Actions
     setNativeResolution: () => {
         resizeRenderer(window.innerWidth, window.innerHeight);
+    },
+    setHalfNativeResolution: () => {
+        resizeToNativePercent(0.5);
     },
     setPicoResolution: () => {
         // Pico 4 is 2000x2000x2=4000x2000, but try to maintain aspect ratio
@@ -165,10 +179,12 @@ const guiState = {
 const statsFolder = gui.addFolder('Stats');
 statsFolder.add(guiState, 'resolution').listen().name('Resolution').disable(true);
 statsFolder.add(guiState, 'renderResolution').listen().name('Render Resolution').disable(true);
+statsFolder.add(guiState, 'pixelRatio').listen().name('Pixel Ratio').disable(true);
 statsFolder.add(guiState, 'vertices').listen().name('Vertices').disable(true);
 statsFolder.add(guiState, 'positionBufferSize').listen().name('Position Buffer Size').disable(true);
 const actionsFolder = gui.addFolder('Actions');
 actionsFolder.add(guiState, 'setNativeResolution').name('Set Native Resolution');
+actionsFolder.add(guiState, 'setHalfNativeResolution').name('Set 0.5x Native Resolution');
 actionsFolder.add(guiState, 'setPicoResolution').name('Set Pico Resolution');
 
 let lastTime = 0;
