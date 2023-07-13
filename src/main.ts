@@ -53,9 +53,7 @@ orbitControls.enableDamping = true;
 orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
 function resizeRenderer(
     internalWidth: number,
-    internalHeight: number,
-    externalWidth: string,
-    externalHeight: string,
+    internalHeight: number
 ) {
     console.log(`Resizing renderer to ${internalWidth}x${internalHeight}`);
     const aspect = internalWidth / internalHeight;
@@ -63,12 +61,12 @@ function resizeRenderer(
     renderer.setPixelRatio(window.devicePixelRatio);
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
-    renderer.domElement.style.width = externalWidth;
-    renderer.domElement.style.height = externalHeight;
+    renderer.domElement.style.width = window.innerWidth + 'px';
+    renderer.domElement.style.height = window.innerHeight + 'px';
 }
-resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
+resizeRenderer(window.innerWidth, window.innerHeight);
 window.addEventListener('resize', () => {
-    resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
+    resizeRenderer(window.innerWidth, window.innerHeight);
 });
 
 const controls = new Keybinds();
@@ -137,9 +135,6 @@ scene.add(chunk);
 const gui = new GUI();
 const guiState = {
     // Stats
-    sayHi: () => {
-        console.log('Hi!');
-    },
     get vertices() {
         return chunkMesh.attributes.position.count;
     },
@@ -149,17 +144,27 @@ const guiState = {
     get texture() {
         return texture;
     },
+    get resolution() {
+        return `${window.innerWidth}x${window.innerHeight}`;
+    },
+    get renderResolution() {
+        const target = new THREE.Vector2();
+        renderer.getSize(target);
+        return `${target.x}x${target.y}`;
+    },
+
     // Actions
     setNativeResolution: () => {
-        resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
+        resizeRenderer(window.innerWidth, window.innerHeight);
     },
     setPicoResolution: () => {
         // Pico 4 is 2000x2000x2=4000x2000, but try to maintain aspect ratio
-        resizeRenderer(4000, 2000, '100%', '100%');
+        resizeRenderer(4000, 2000);
     }
 };
 const statsFolder = gui.addFolder('Stats');
-statsFolder.add(guiState, 'sayHi').name('Say Hi');
+statsFolder.add(guiState, 'resolution').listen().name('Resolution').disable(true);
+statsFolder.add(guiState, 'renderResolution').listen().name('Render Resolution').disable(true);
 statsFolder.add(guiState, 'vertices').listen().name('Vertices').disable(true);
 statsFolder.add(guiState, 'positionBufferSize').listen().name('Position Buffer Size').disable(true);
 const actionsFolder = gui.addFolder('Actions');
