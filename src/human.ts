@@ -7,3 +7,13 @@ export function humanSize(val) { // starts with bytes
     }
     return Math.max(val, 0.1).toFixed(1) + units[i];
 }
+export function humanTime(val) { // starts with ms
+    var i = 0;
+    var units = 'ms s min h d'.split(' ');
+    var intervals = [1000, 60, 60, 24];
+    while (val >= intervals[i]) {
+        val = val / intervals[i];
+        i++;
+    }
+    return Math.max(val, 0.1).toFixed(1) + ' ' + units[i];
+}

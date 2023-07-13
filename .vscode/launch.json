@@ -6,14 +6,14 @@
             "type": "firefox",
             "request": "launch",
             "reAttach": true,
-            "url": "http://localhost:5173/",
+            "url": "https://localhost:5173/",
             "webRoot": "${workspaceFolder}/src"
         },
         {
             "name": "Launch localhost (Chrome)",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:5173/",
+            "url": "https://localhost:5173/",
             "webRoot": "${workspaceFolder}/src"
         },
         {
@@ -23,7 +23,17 @@
             "runtimeArgs": [
                 "--remote-debugging-port=9222"
             ],
-            "url": "http://localhost:5173/"
+            "url": "https://localhost:5173/"
         },
+        // Android
+        {
+            "type": "android-webview",
+            "request": "attach",
+            "name": "Attach to Chrome on an Android Device",
+            "device": "192.168.1.104:39957",
+            "application": "com.android.chrome",
+            "webRoot": "${workspaceFolder}/src",
+            "urlFilter": "https://192.168.1.107:5173/*"
+        }
     ]
 }
