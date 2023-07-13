@@ -20,56 +20,6 @@ import('@dimforge/rapier3d').then((rapier) => {
     console.log(rapier);
 });
 
-// Test out the Vue reactivity library
-console.log(`===Reactivity tests===`);
-const a = ref(1);
-const b = ref(2);
-const c = computed(() => a.value + b.value);
-console.log(`Computed (a + b): ${c.value}`);
-a.value = 2;
-console.log(`Computed (a + b, a -> 2): ${c.value}`);
-// Test out reactivity inside of objects
-const reactiveObj = ref({
-    val: 15,
-});
-console.log(`Reactive object: ${reactiveObj.value.val}`);
-reactiveObj.value.val = 20;
-console.log(`Reactive object (value -> 20): ${reactiveObj.value.val}`);
-const reactiveObjPlus10 = computed(() => reactiveObj.value.val + 10);
-console.log(`Reactive object + 10: ${reactiveObjPlus10.value}`);
-reactiveObj.value.val = 30;
-console.log(`Reactive object + 10 (value -> 30): ${reactiveObjPlus10.value}`);
-function sleep(ms) {
-    var e = new Date().getTime() + ms;
-    while (new Date().getTime() <= e) { }
-}
-// Measure the overhead of reactivity by doing a lot of a simple
-// computation with and without reactivity
-console.log('');
-console.log('Reacity overhead test');
-const reactivityOverheadTest = ref(0);
-const reactivityOverheadTestComputed = computed(() => reactivityOverheadTest.value + 1);
-const reactivityOverheadTestStart = performance.now();
-let sum = 0;
-for (let i = 0; i < 1000000; i++) {
-    reactivityOverheadTest.value = reactivityOverheadTestComputed.value;
-    sum += reactivityOverheadTest.value;
-}
-const reactivityOverheadTestEnd = performance.now();
-console.log(`Finished reactivity overhead test in ${humanTime(reactivityOverheadTestEnd - reactivityOverheadTestStart)} with a sum of ${sum}`);
-// Now do the same thing without reactivity
-console.log('');
-console.log('Non-reactivity overhead test');
-let nonReactivityOverheadTest = 0;
-const nonReactivityOverheadTestStart = performance.now();
-let nonReactivitySum = 0;
-for (let i = 0; i < 1000000; i++) {
-    nonReactivityOverheadTest += 1;
-    nonReactivitySum += nonReactivityOverheadTest;
-}
-const nonReactivityOverheadTestEnd = performance.now();
-console.log(`Finished non-reactivity overhead test in ${humanTime(nonReactivityOverheadTestEnd - nonReactivityOverheadTestStart)} with a sum of ${nonReactivitySum}`);
-
 // CONSTANTS
 const chunkSize = 64;
 
@@ -77,9 +27,6 @@ console.log(`===THREE.js===`);
 const renderer = new THREE.WebGLRenderer({
     antialias: true,
 });
-console.log(`Rendering at ${window.innerWidth}x${window.innerHeight}`);
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 document.body.appendChild(renderer.domElement);
 const button = VRButton.createButton(renderer);
@@ -97,7 +44,6 @@ const gl = renderer.getContext() as WebGL2RenderingContext;
 // Get maximum uniform block size
 const maxUniformBlockSize = gl.getParameter(gl.MAX_UNIFORM_BLOCK_SIZE);
 console.log(`Max Uniform Block Size: ${maxUniformBlockSize}`);
-console.log(gl.RGBA8UI);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -105,10 +51,24 @@ camera.position.copy(new THREE.Vector3(70, 70, 70));
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+function resizeRenderer(
+    internalWidth: number,
+    internalHeight: number,
+    externalWidth: string,
+    externalHeight: string,
+) {
+    console.log(`Resizing renderer to ${internalWidth}x${internalHeight}`);
+    const aspect = internalWidth / internalHeight;
+    renderer.setSize(internalWidth, internalHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    camera.aspect = aspect;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.domElement.style.width = externalWidth;
+    renderer.domElement.style.height = externalHeight;
+}
+resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
+window.addEventListener('resize', () => {
+    resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
 });
 
 const controls = new Keybinds();
@@ -170,7 +130,6 @@ positionAttribute.onUpload(() => {
 chunkMesh.setAttribute('position', positionAttribute);
 chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
 chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
-console.log(chunkMesh.attributes);
 const chunk = new ChunkMesh(chunkMesh, material);
 scene.add(chunk);
 
@@ -192,25 +151,11 @@ const guiState = {
     },
     // Actions
     setNativeResolution: () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        console.log(`Set resolution to ${window.innerWidth}x${window.innerHeight}`);
+        resizeRenderer(window.innerWidth, window.innerHeight, '100%', '100%');
     },
     setPicoResolution: () => {
         // Pico 4 is 2000x2000x2=4000x2000, but try to maintain aspect ratio
-        const landscape = window.innerWidth > window.innerHeight;
-        const renderWidth = landscape ? 4000 : 2000;
-        const renderHeight = landscape ? 2000 : 4000;
-        const realWidth = window.innerWidth;
-        const realHeight = window.innerHeight;
-        const aspectRatio = realWidth / realHeight;
-        camera.aspect = aspectRatio;
-        camera.updateProjectionMatrix();
-        renderer.setSize(realWidth, realHeight);
-        renderer.setViewport(0, 0, renderWidth, renderHeight);
-        renderer.setPixelRatio(renderWidth / realWidth);
-        console.log(`Set resolution to ${renderWidth}x${renderHeight}`);
+        resizeRenderer(4000, 2000, '100%', '100%');
     }
 };
 const statsFolder = gui.addFolder('Stats');
