@@ -12,8 +12,9 @@ import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
 import { ChunkMeshBuilder, FaceMeshBuilder, VoxelMeshBuilder } from './mesh';
 import { TextureBuffer } from './data_texture';
-import { humanSize, humanTime } from './human';
+import { humanCount, humanSize, humanTime } from './human';
 import { ChunkMesh } from './chunk_mesh';
+import { Coord } from './coordinate';
 
 // Test out the rapier3d library
 import('@dimforge/rapier3d').then((rapier) => {
@@ -21,7 +22,7 @@ import('@dimforge/rapier3d').then((rapier) => {
 });
 
 // CONSTANTS
-const chunkSize = 3;
+const chunkSize = 64;
 
 console.log(`===THREE.js===`);
 const renderer = new THREE.WebGLRenderer({
@@ -86,6 +87,8 @@ document.body.appendChild(stats.dom);
 
 // Add a wireframe control
 controls.keyboardKey('toggleWireframe', 'KeyF');
+// Add cull camera control
+controls.keyboardKey('switchCullCamera', 'KeyC');
 
 // Postprocessing
 const composer = new EffectComposer(renderer);
@@ -124,6 +127,7 @@ function getAttributeSize(attribute: THREE.BufferAttribute) {
 }
 const geometries: THREE.BufferGeometry[] = [];
 const positionAttributes: THREE.Uint8BufferAttribute[] = [];
+const chunkMeshes: ChunkMesh[] = [];
 for (let i = 0; i < chunkMeshData.position.length; i++) {
     const chunkMesh = new THREE.BufferGeometry();
     geometries.push(chunkMesh);
@@ -142,6 +146,8 @@ for (let i = 0; i < chunkMeshData.position.length; i++) {
     chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal[i], 3));
     chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv[i], 2));
     const chunk = new ChunkMesh(chunkMesh, material);
+    chunk.geometry.computeBoundingBox();
+    chunkMeshes.push(chunk);
     scene.add(chunk);
 }
 
@@ -150,7 +156,7 @@ const gui = new GUI();
 const guiState = {
     // Stats
     get vertices() {
-        return geometries.reduce((acc, g) => acc + g.attributes.position.count, 0);
+        return humanCount(geometries.reduce((acc, g) => acc + g.attributes.position.count, 0));
     },
     get positionBufferSize() {
         return humanSize(positionAttributes.reduce((acc, attribute) => acc + getAttributeSize(attribute), 0));
@@ -194,6 +200,67 @@ actionsFolder.add(guiState, 'setNativeResolution').name('Set Native Resolution')
 actionsFolder.add(guiState, 'setHalfNativeResolution').name('Set 0.5x Native Resolution');
 actionsFolder.add(guiState, 'setPicoResolution').name('Set Pico Resolution');
 
+// Face culling
+let cullCamera = camera;
+const raycaster = new THREE.Raycaster();
+function isNormalVisible(normal: THREE.Vector3, sample: THREE.Vector2, camera: THREE.PerspectiveCamera) {
+    // Create a ray from the camera through the sample point
+    raycaster.setFromCamera(sample, camera);
+    // Check if the ray direction is in the same direction as the normal
+    return raycaster.ray.direction.dot(normal) < 0;
+}
+function cullNormals(meshes: ChunkMesh[], camera: THREE.PerspectiveCamera) {
+    // Set all meshes to be invisible
+    for (var mesh of meshes) {
+        mesh.visible = false;
+    }
+
+    // Get the overall bounding box
+    let minX, minY, minZ, maxX, maxY, maxZ;
+    minX = minY = minZ = Number.POSITIVE_INFINITY;
+    maxX = maxY = maxZ = Number.NEGATIVE_INFINITY;
+    for (var mesh of meshes) {
+        const boundingBox = mesh.geometry.boundingBox;
+        minX = Math.min(minX, boundingBox!.min.x);
+        minY = Math.min(minY, boundingBox!.min.y);
+        minZ = Math.min(minZ, boundingBox!.min.z);
+        maxX = Math.max(maxX, boundingBox!.max.x);
+        maxY = Math.max(maxY, boundingBox!.max.y);
+        maxZ = Math.max(maxZ, boundingBox!.max.z);
+    }
+
+    // Create 8 bounding box corners
+    const corners = [
+        new THREE.Vector3(minX, minY, minZ),
+        new THREE.Vector3(minX, minY, maxZ),
+        new THREE.Vector3(minX, maxY, minZ),
+        new THREE.Vector3(minX, maxY, maxZ),
+        new THREE.Vector3(maxX, minY, minZ),
+        new THREE.Vector3(maxX, minY, maxZ),
+        new THREE.Vector3(maxX, maxY, minZ),
+        new THREE.Vector3(maxX, maxY, maxZ),
+    ];
+    // Turn them into screen space
+    const screenCorners = corners.map((corner) => {
+        const screenCorner = corner.clone();
+        screenCorner.project(camera);
+        return screenCorner;
+    });
+
+    // Check each direction
+    for (let i = 0; i < meshes.length; i++) {
+        const direction = Coord.DIRECTIONS[i];
+        for (let j = 0; j < screenCorners.length; j++) {
+            const corner = screenCorners[j];
+            const sample = new THREE.Vector2(corner.x, corner.y);
+            if (isNormalVisible(direction, sample, camera)) {
+                meshes[i].visible = true;
+                break;
+            }
+        }
+    }
+}
+
 let lastTime = 0;
 renderer.setAnimationLoop((time) => {
     const delta = time - lastTime;
@@ -212,6 +279,19 @@ renderer.setAnimationLoop((time) => {
             }
         });
     }
+    // Switch the cull camera
+    if (controls.get('switchCullCamera').isJustReleased) {
+        if (cullCamera == camera) {
+            cullCamera = camera.clone();
+            console.log(`Cull camera: clone of current camera`);
+        } else {
+            cullCamera = camera;
+            console.log(`Cull camera: current camera`);
+        }
+    }
+
+    // Do automatic backface culling
+    cullNormals(chunkMeshes, cullCamera);
 
     controls.maintenance(time);
 });

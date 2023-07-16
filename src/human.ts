@@ -17,3 +17,12 @@ export function humanTime(val) { // starts with ms
     }
     return Math.max(val, 0.1).toFixed(1) + ' ' + units[i];
 }
+export function humanCount(val) {
+    var i = 0;
+    var units = ' K M B T Q'.split(' ');
+    while (val >= 1000) {
+        val = val / 1000;
+        i++;
+    }
+    return Math.max(val, 0.1).toFixed(1) + units[i];
+}
