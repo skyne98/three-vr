@@ -1,287 +1,257 @@
 import * as THREE from 'three';
 
-export interface ChunkData {
-    type: Uint16Array; // 0 = air
-    topUV: Uint16Array;
-    bottomUV?: Uint16Array;
-    leftUV?: Uint16Array;
-    rightUV?: Uint16Array;
-    frontUV?: Uint16Array;
-    backUV?: Uint16Array;
-}
+import { Coord } from './coordinate';
 
-export interface CreateMeshOptions {
-    width: number;
-    height?: number;
-    depth?: number;
-    uvScale?: number;
-    data: ChunkData;
-    neighborChunkData?: NeighborChunkDataCallback;
-}
-
-export interface CreateMeshResult {
-    quadId: Uint32Array;
+// === BUILDING ONE FACE ===
+export interface FaceMeshData {
     position: Uint8Array;
+    normal: Uint8Array;
     uv: Float32Array;
-    normal: Float32Array;
 }
 
-/** Used to get the chunk data of a neighbor chunk. */
-export type NeighborChunkDataCallback = (x: number, y: number, z: number) => ChunkData;
+export class FaceMeshBuilder {
+    /// Build a voxel face mesh of a unit size, situated at 0,0,0.
+    public static forDirection(id: number): FaceMeshData {
+        let position = new Uint8Array(6 * 3);
+        let normal = new Uint8Array(6 * 3);
+        let uv = new Float32Array(6 * 2);
 
-export function getBlockType(
-    options: CreateMeshOptions,
-    x: number,
-    y: number,
-    z: number
-): number {
-    let { width, height, depth } = options;
-    height = height || width;
-    depth = depth || width;
-    const { type } = options.data;
+        switch (id) {
+            case Coord.FRONT_ID: // Front face lies on the XY plane at Z=0.
+                position = new Uint8Array([
+                    0, 0, 0,
+                    0, 1, 0,
+                    1, 1, 0,
+                    0, 0, 0,
+                    1, 1, 0,
+                    1, 0, 0
+                ]);
+                uv = new Float32Array([
+                    1, 0,
+                    1, 1,
+                    0, 1,
+                    1, 0,
+                    0, 1,
+                    0, 0
+                ]);
+                break;
 
-    const localX = x % width;
-    const localY = y % height;
-    const localZ = z % depth;
-    const chunkX = Math.floor(x / width);
-    const chunkY = Math.floor(y / height);
-    const chunkZ = Math.floor(z / depth);
+            case Coord.BACK_ID: // Back face lies on the XY plane at Z=1.
+                position = new Uint8Array([
+                    0, 0, 1,
+                    1, 0, 1,
+                    1, 1, 1,
+                    0, 0, 1,
+                    1, 1, 1,
+                    0, 1, 1
+                ]);
+                uv = new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1
+                ]);
+                break;
 
-    if (chunkX === 0 && chunkY === 0 && chunkZ === 0) {
-        return type[localX + localY * width + localZ * width * height];
-    }
-    if (options.neighborChunkData) {
-        const neighborChunkData = options.neighborChunkData(chunkX, chunkY, chunkZ);
-        if (neighborChunkData) {
-            return neighborChunkData.type[localX + localY * width + localZ * width * height];
+            case Coord.LEFT_ID: // Left face lies on the YZ plane at X=0.
+                position = new Uint8Array([
+                    0, 0, 0,
+                    0, 0, 1,
+                    0, 1, 1,
+                    0, 0, 0,
+                    0, 1, 1,
+                    0, 1, 0
+                ]);
+                uv = new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1
+                ]);
+                break;
+
+            case Coord.RIGHT_ID: // Right face lies on the YZ plane at X=1.
+                position = new Uint8Array([
+                    1, 0, 0,
+                    1, 1, 0,
+                    1, 1, 1,
+                    1, 0, 0,
+                    1, 1, 1,
+                    1, 0, 1
+                ]);
+                uv = new Float32Array([
+                    1, 0,
+                    1, 1,
+                    0, 1,
+                    1, 0,
+                    0, 1,
+                    0, 0
+                ]);
+                break;
+
+
+            case Coord.TOP_ID: // Top face lies on the XZ plane at Y=1.
+                position = new Uint8Array([
+                    0, 1, 0,
+                    0, 1, 1,
+                    1, 1, 1,
+                    0, 1, 0,
+                    1, 1, 1,
+                    1, 1, 0
+                ]);
+                uv = new Float32Array([
+                    0, 1,
+                    0, 0,
+                    1, 0,
+                    0, 1,
+                    1, 0,
+                    1, 1
+                ]);
+                break;
+
+            case Coord.BOTTOM_ID: // Bottom face lies on the XZ plane at Y=0.
+                position = new Uint8Array([
+                    0, 0, 0,
+                    1, 0, 0,
+                    1, 0, 1,
+                    0, 0, 0,
+                    1, 0, 1,
+                    0, 0, 1
+                ]);
+                uv = new Float32Array([
+                    0, 0,
+                    1, 0,
+                    1, 1,
+                    0, 0,
+                    1, 1,
+                    0, 1
+                ]);
+                break;
         }
-    }
 
-    return 0;
+        return { position, normal, uv };
+    }
+    /// Offset the face mesh data by the given offset.
+    public static offset(faceMeshData: FaceMeshData, offset: THREE.Vector3): FaceMeshData {
+        const { position, normal, uv } = faceMeshData;
+        const offsetPosition = new Uint8Array(position.length);
+        for (let i = 0; i < position.length; i += 3) {
+            offsetPosition[i] = position[i] + offset.x;
+            offsetPosition[i + 1] = position[i + 1] + offset.y;
+            offsetPosition[i + 2] = position[i + 2] + offset.z;
+        }
+        return { position: offsetPosition, normal, uv };
+    }
 }
 
-export function createChunkMesh(
-    options: CreateMeshOptions
-): CreateMeshResult {
-    // Create cube face indices
-    const quadIds: number[] = [];
-    const vertices: number[] = [];
-    const uvs: number[] = [];
-    const normals: number[] = [];
-    const width = options.width;
-    const height = options.height || width;
-    const depth = options.depth || width;
-    const uvScale = options.uvScale || 0;
 
-    let indexOffset = 0;
-    let quadIdOffset = 0;
-    for (let x = 0; x < width; x += 1) {
-        for (let y = 0; y < height; y += 1) {
-            for (let z = 0; z < depth; z += 1) {
-                const current = getBlockType(options, x, y, z);
-                const currentSolid = current !== 0;
-                const renderFront = currentSolid && getBlockType(options, x, y, z + 1) === 0;
-                const renderBack = currentSolid && getBlockType(options, x, y, z - 1) === 0;
-                const renderLeft = currentSolid && getBlockType(options, x - 1, y, z) === 0;
-                const renderRight = currentSolid && getBlockType(options, x + 1, y, z) === 0;
-                const renderTop = currentSolid && getBlockType(options, x, y + 1, z) === 0;
-                const renderBottom = currentSolid && getBlockType(options, x, y - 1, z) === 0;
+// === BUILDING A VOXEL MESH ===
+export interface VoxelMeshData {
+    // ... for each direction
+    position: Uint8Array;
+    normal: Uint8Array;
+    uv: Float32Array;
+}
 
-                const width = 1;
-                const height = 1;
-                const depth = 1;
+export class VoxelMeshBuilder {
+    public static build(): VoxelMeshData {
+        const position = new Uint8Array(6 * 6 * 3);
+        const normal = new Uint8Array(6 * 6 * 3);
+        const uv = new Float32Array(6 * 6 * 2);
 
-                const topUV = new THREE.Vector2(
-                    options.data.topUV[current * 2] * uvScale,
-                    options.data.topUV[current * 2 + 1] * uvScale
-                );
-                const bottomUV = options.data.bottomUV ? new THREE.Vector2(
-                    options.data.bottomUV[current * 2] * uvScale,
-                    options.data.bottomUV[current * 2 + 1] * uvScale
-                ) : topUV;
-                const leftUV = options.data.leftUV ? new THREE.Vector2(
-                    options.data.leftUV[current * 2] * uvScale,
-                    options.data.leftUV[current * 2 + 1] * uvScale
-                ) : topUV;
-                const rightUV = options.data.rightUV ? new THREE.Vector2(
-                    options.data.rightUV[current * 2] * uvScale,
-                    options.data.rightUV[current * 2 + 1] * uvScale
-                ) : topUV;
-                const frontUV = options.data.frontUV ? new THREE.Vector2(
-                    options.data.frontUV[current * 2] * uvScale,
-                    options.data.frontUV[current * 2 + 1] * uvScale
-                ) : topUV;
-                const backUV = options.data.backUV ? new THREE.Vector2(
-                    options.data.backUV[current * 2] * uvScale,
-                    options.data.backUV[current * 2 + 1] * uvScale
-                ) : topUV;
+        for (let i = 0; i < 6; i++) {
+            const faceMeshData: FaceMeshData = FaceMeshBuilder.forDirection(i);
+            position.set(faceMeshData.position, i * 6 * 3);
+            normal.set(faceMeshData.normal, i * 6 * 3);
+            uv.set(faceMeshData.uv, i * 6 * 2);
+        }
 
-                if (renderFront) {
-                    // pointing towards true north (z+)
-                    vertices.push(
-                        x, y, depth + z, // 0
-                        width + x, y, depth + z, // 1
-                        width + x, height + y, depth + z, // 2
-                        x, y, depth + z, // 0
-                        width + x, height + y, depth + z, // 2
-                        x, height + y, depth + z, // 3
-                    );
-                    uvs.push(
-                        frontUV.x, frontUV.y,
-                        frontUV.x + uvScale, frontUV.y,
-                        frontUV.x + uvScale, frontUV.y + uvScale,
-                        frontUV.x, frontUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Front
-                        0, 0, 1,
-                        0, 0, 1,
-                        0, 0, 1,
-                        0, 0, 1
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
-                }
-                if (renderBack) {
-                    vertices.push(
-                        x, y, z, // 0
-                        width + x, height + y, z, // 2
-                        width + x, y, z, // 1
-                        x, y, z, // 0
-                        x, height + y, z, // 3
-                        width + x, height + y, z, // 2
-                    );
-                    uvs.push(
-                        backUV.x + uvScale, backUV.y,
-                        backUV.x, backUV.y,
-                        backUV.x, backUV.y + uvScale,
-                        backUV.x + uvScale, backUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Back
-                        0, 0, -1,
-                        0, 0, -1,
-                        0, 0, -1,
-                        0, 0, -1
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
-                }
-                if (renderLeft) {
-                    vertices.push(
-                        x, y, z, // 0
-                        x, y, depth + z, // 1
-                        x, height + y, depth + z, // 2
-                        x, y, z, // 0
-                        x, height + y, depth + z, // 2
-                        x, height + y, z, // 3
-                    );
-                    uvs.push(
-                        leftUV.x, leftUV.y,
-                        leftUV.x + uvScale, leftUV.y,
-                        leftUV.x + uvScale, leftUV.y + uvScale,
-                        leftUV.x, leftUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Left
-                        -1, 0, 0,
-                        -1, 0, 0,
-                        -1, 0, 0,
-                        -1, 0, 0
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
-                }
-                if (renderRight) {
-                    vertices.push(
-                        width + x, y, depth + z, // 0
-                        width + x, y, z, // 1
-                        width + x, height + y, z, // 2
-                        width + x, y, depth + z, // 0
-                        width + x, height + y, z, // 2
-                        width + x, height + y, depth + z, // 3
-                    );
-                    uvs.push(
-                        // Right face
-                        rightUV.x, rightUV.y,
-                        rightUV.x + uvScale, rightUV.y,
-                        rightUV.x + uvScale, rightUV.y + uvScale,
-                        rightUV.x, rightUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Right
-                        1, 0, 0,
-                        1, 0, 0,
-                        1, 0, 0,
-                        1, 0, 0
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
-                }
-                if (renderTop) {
-                    vertices.push(
-                        x, height + y, depth + z, // 0
-                        width + x, height + y, depth + z, // 1
-                        width + x, height + y, z, // 2
-                        x, height + y, depth + z, // 0
-                        width + x, height + y, z, // 2
-                        x, height + y, z, // 3
-                    );
-                    uvs.push(
-                        topUV.x, topUV.y,
-                        topUV.x + uvScale, topUV.y,
-                        topUV.x + uvScale, topUV.y + uvScale,
-                        topUV.x, topUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Top
-                        0, 1, 0,
-                        0, 1, 0,
-                        0, 1, 0,
-                        0, 1, 0
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
-                }
-                if (renderBottom) {
-                    vertices.push(
-                        x, y, z, // 0
-                        width + x, y, z, // 1
-                        width + x, y, depth + z, // 2
-                        x, y, z, // 0
-                        width + x, y, depth + z, // 2
-                        x, y, depth + z, // 3
-                    );
-                    uvs.push(
-                        bottomUV.x, bottomUV.y,
-                        bottomUV.x + uvScale, bottomUV.y,
-                        bottomUV.x + uvScale, bottomUV.y + uvScale,
-                        bottomUV.x, bottomUV.y + uvScale,
-                    );
-                    normals.push(
-                        // Bottom
-                        0, -1, 0,
-                        0, -1, 0,
-                        0, -1, 0,
-                        0, -1, 0
-                    );
-                    quadIds.push(quadIdOffset, quadIdOffset, quadIdOffset, quadIdOffset);
-                    quadIdOffset += 1;
+        return { position, normal, uv };
+    }
+    /// Offset the voxel mesh data by the given offset.
+    public static offset(voxelMeshData: VoxelMeshData, offset: THREE.Vector3): VoxelMeshData {
+        const { position, normal, uv } = voxelMeshData;
+        const offsetPosition = new Uint8Array(position.length);
+        for (let i = 0; i < position.length; i++) {
+            offsetPosition[i] = position[i] + offset.x;
+            offsetPosition[i + 1] = position[i + 1] + offset.y;
+            offsetPosition[i + 2] = position[i + 2] + offset.z;
+        }
+        return { position: offsetPosition, normal, uv };
+    }
+}
+
+// === BUILDING A CHUNK MESH ===
+export interface ChunkMeshData {
+    // ... for each direction
+    position: Uint8Array[];
+    normal: Uint8Array[];
+    uv: Float32Array[];
+}
+
+export class ChunkMeshBuilder {
+    public static build(chunkSize: number, chunkData: Uint16Array): ChunkMeshData {
+        const maxFaces = chunkSize ** 3; // Maximum possible number of faces per direction
+        const position: Uint8Array[] = Array(6).fill(null).map(() => new Uint8Array(maxFaces * 6 * 3));
+        const normal: Uint8Array[] = Array(6).fill(null).map(() => new Uint8Array(maxFaces * 6 * 3));
+        const uv: Float32Array[] = Array(6).fill(null).map(() => new Float32Array(maxFaces * 6 * 2));
+        const faceCounts: number[] = Array(6).fill(0);
+
+        for (let x = 0; x < chunkSize; x++) {
+            for (let y = 0; y < chunkSize; y++) {
+                for (let z = 0; z < chunkSize; z++) {
+                    const voxPos = new THREE.Vector3(x, y, z);
+                    const voxIndex = Coord.threeToIndex(voxPos, chunkSize);
+                    if (chunkData[voxIndex] !== 0) { // If the voxel is not air
+                        for (let i = 0; i < 6; i++) {
+                            const neighborDirection = Coord.DIRECTIONS[i];
+                            const neighborPosition = voxPos.clone().add(neighborDirection);
+                            let neighborOutside = false;
+                            if (neighborPosition.x < 0 || neighborPosition.x >= chunkSize ||
+                                neighborPosition.y < 0 || neighborPosition.y >= chunkSize ||
+                                neighborPosition.z < 0 || neighborPosition.z >= chunkSize) {
+                                neighborOutside = true;
+                            }
+
+                            const neighborIndex = Coord.threeToIndex(neighborPosition, chunkSize);
+                            if ((neighborIndex < 0 || neighborIndex >= chunkData.length) && !neighborOutside) {
+                                throw new Error(`Neighbor index ${neighborIndex} out of bounds`);
+                            }
+                            // Check if the neighboring voxel in the direction is air
+                            if (neighborOutside || chunkData[neighborIndex] === 0) {
+                                const faceMeshData: FaceMeshData = FaceMeshBuilder.forDirection(i);
+                                const offsetFaceMeshData: FaceMeshData = FaceMeshBuilder.offset(faceMeshData, voxPos);
+                                position[i].set(offsetFaceMeshData.position, faceCounts[i] * 6 * 3);
+                                normal[i].set(offsetFaceMeshData.normal, faceCounts[i] * 6 * 3);
+                                uv[i].set(offsetFaceMeshData.uv, faceCounts[i] * 6 * 2);
+                                faceCounts[i]++;
+                            }
+                        }
+                    }
                 }
             }
         }
+
+        // Shrink the arrays to the actual size
+        for (let i = 0; i < 6; i++) {
+            position[i] = position[i].subarray(0, faceCounts[i] * 6 * 3);
+            normal[i] = normal[i].subarray(0, faceCounts[i] * 6 * 3);
+            uv[i] = uv[i].subarray(0, faceCounts[i] * 6 * 2);
+        }
+
+        return { position, normal, uv };
     }
-
-    // Create cube geometry
-    const quadId = new Uint32Array(quadIds);
-    const position = new Uint8Array(vertices);
-    const uv = new Float32Array(uvs);
-    const normal = new Float32Array(normals);
-
-    return {
-        quadId,
-        position,
-        uv,
-        normal,
-    };
+    /// Offset the chunk mesh data by the given offset.
+    public static offset(chunkMeshData: ChunkMeshData, offset: THREE.Vector3): ChunkMeshData {
+        const { position, normal, uv } = chunkMeshData;
+        const offsetPosition: Uint8Array[] = [];
+        for (let i = 0; i < position.length; i++) {
+            offsetPosition.push(FaceMeshBuilder.offset({ position: position[i], normal: normal[i], uv: uv[i] }, offset).position);
+        }
+        return { position: offsetPosition, normal, uv };
+    }
 }

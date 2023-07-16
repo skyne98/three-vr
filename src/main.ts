@@ -10,7 +10,7 @@ import { effectScope, computed, ref } from '@vue/reactivity';
 
 import { Keybinds } from './keybinds/mod';
 import { blockMaterial } from './materials/block';
-import { createChunkMesh } from './mesh';
+import { ChunkMeshBuilder, FaceMeshBuilder, VoxelMeshBuilder } from './mesh';
 import { TextureBuffer } from './data_texture';
 import { humanSize, humanTime } from './human';
 import { ChunkMesh } from './chunk_mesh';
@@ -21,7 +21,7 @@ import('@dimforge/rapier3d').then((rapier) => {
 });
 
 // CONSTANTS
-const chunkSize = 64;
+const chunkSize = 3;
 
 console.log(`===THREE.js===`);
 const renderer = new THREE.WebGLRenderer({
@@ -47,10 +47,12 @@ console.log(`Max Uniform Block Size: ${maxUniformBlockSize}`);
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.copy(new THREE.Vector3(70, 70, 70));
+camera.position.copy(new THREE.Vector3(chunkSize + 2, chunkSize + 2, chunkSize + 2));
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.target = new THREE.Vector3(chunkSize / 2, chunkSize / 2, chunkSize / 2);
+const axesHelper = new THREE.AxesHelper(1);
+scene.add(axesHelper);
 const nativeWindowSize = new THREE.Vector2(window.innerWidth, window.innerHeight);
 function resizeRenderer(
     internalWidth: number,
@@ -101,52 +103,57 @@ const projectionMatrix = camera.projectionMatrix.clone();
 const modelViewMatrix = camera.matrixWorldInverse.clone();
 // Generate a material
 const material = blockMaterial(new THREE.Vector2(1024, 1024), texture, projectionMatrix, modelViewMatrix);
+// Generate a voxel
+// const voxelMeshData = VoxelMeshBuilder.offset(VoxelMeshBuilder.build(), new THREE.Vector3(0, 0, 0));
+// const voxelMesh = new THREE.BufferGeometry();
+// voxelMesh.setAttribute('position', new THREE.Uint8BufferAttribute(voxelMeshData.position, 3));
+// (voxelMesh.getAttribute('position') as any).gpuType = THREE.IntType;
+// voxelMesh.setAttribute('normal', new THREE.Uint8BufferAttribute(voxelMeshData.normal, 3));
+// voxelMesh.setAttribute('uv', new THREE.Float32BufferAttribute(voxelMeshData.uv, 2));
+// const voxel = new THREE.Mesh(voxelMesh, material);
+// scene.add(voxel);
+
 // Generate a chunk
 const chunkTypes = new Uint16Array(chunkSize * chunkSize * chunkSize);
 for (let i = 0; i < chunkTypes.length; i++) {
     chunkTypes[i] = Math.round(Math.random());
 }
-const chunkMeshData = createChunkMesh({
-    width: chunkSize,
-    data: {
-        type: chunkTypes,
-        topUV: new Uint16Array(chunkSize * chunkSize * chunkSize * 2),
-    },
-    uvScale: 1,
-});
-const chunkMesh = new THREE.BufferGeometry();
-
+const chunkMeshData = ChunkMeshBuilder.offset(ChunkMeshBuilder.build(chunkSize, chunkTypes), new THREE.Vector3(0, 0, 0));
 function getAttributeSize(attribute: THREE.BufferAttribute) {
     return attribute.array.length;
 }
-
-const quadIdAttribute = new THREE.Uint32BufferAttribute(chunkMeshData.quadId, 1);
-chunkMesh.setAttribute('quadId', quadIdAttribute);
-const positionAttribute = new THREE.Uint8BufferAttribute(chunkMeshData.position, 3);
-positionAttribute.name = 'position attribute';
-(positionAttribute as any).gpuType = THREE.IntType;
-const positionAttributeUploadStart = performance.now();
-positionAttribute.onUpload(() => {
-    const positionAttributeUploadEnd = performance.now();
-    const size = humanSize(getAttributeSize(positionAttribute));
-    const name = positionAttribute.name;
-    console.log(`Uploaded ${name} (${size}) in ${positionAttributeUploadEnd - positionAttributeUploadStart}ms`);
-});
-chunkMesh.setAttribute('position', positionAttribute);
-chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal, 3));
-chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv, 2));
-const chunk = new ChunkMesh(chunkMesh, material);
-scene.add(chunk);
+const geometries: THREE.BufferGeometry[] = [];
+const positionAttributes: THREE.Uint8BufferAttribute[] = [];
+for (let i = 0; i < chunkMeshData.position.length; i++) {
+    const chunkMesh = new THREE.BufferGeometry();
+    geometries.push(chunkMesh);
+    const positionAttribute = new THREE.Uint8BufferAttribute(chunkMeshData.position[i], 3);
+    positionAttribute.name = 'position attribute';
+    (positionAttribute as any).gpuType = THREE.IntType;
+    positionAttributes.push(positionAttribute);
+    const positionAttributeUploadStart = performance.now();
+    positionAttribute.onUpload(() => {
+        const positionAttributeUploadEnd = performance.now();
+        const size = humanSize(getAttributeSize(positionAttribute));
+        const name = positionAttribute.name;
+        console.log(`Uploaded ${name} (${size}) in ${positionAttributeUploadEnd - positionAttributeUploadStart}ms`);
+    });
+    chunkMesh.setAttribute('position', positionAttribute);
+    chunkMesh.setAttribute('normal', new THREE.BufferAttribute(chunkMeshData.normal[i], 3));
+    chunkMesh.setAttribute('uv', new THREE.BufferAttribute(chunkMeshData.uv[i], 2));
+    const chunk = new ChunkMesh(chunkMesh, material);
+    scene.add(chunk);
+}
 
 // GUI
 const gui = new GUI();
 const guiState = {
     // Stats
     get vertices() {
-        return chunkMesh.attributes.position.count;
+        return geometries.reduce((acc, g) => acc + g.attributes.position.count, 0);
     },
     get positionBufferSize() {
-        return humanSize(getAttributeSize(positionAttribute));
+        return humanSize(positionAttributes.reduce((acc, attribute) => acc + getAttributeSize(attribute), 0));
     },
     get texture() {
         return texture;
